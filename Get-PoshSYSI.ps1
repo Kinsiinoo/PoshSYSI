@@ -7,19 +7,33 @@ $Processor = Get-WmiObject Win32_Processor
 $WinLicenseStatus = Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus
 $WinVersion = Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion
 
+# System
 Write-Host -ForegroundColor Cyan ">> System"
 Write-Host "Name:" $ComputerSystem.Name
+Write-Host "User:" $env:USERNAME
 Write-Host "Model:" $ComputerSystem.Model
+
+# Bios
+Write-Host -ForegroundColor Cyan "`n>> Bios"
+Write-Host "Version:" $Bios.SMBIOSBIOSVersion
 Write-Host "S/N:" $Bios.SerialNumber
-Write-Host -ForegroundColor Cyan ">> Processor"
+
+# Processor
+Write-Host -ForegroundColor Cyan "`n>> Processor"
 Write-Host "Model:" $Processor.Name
 Write-Host "C/LC:" $Processor.NumberOfCores "/" $Processor.NumberOfLogicalProcessors
 Write-Host "Status:" $Processor.Status
-Write-Host -ForegroundColor Cyan ">> Memory"
+
+# Memory
+Write-Host -ForegroundColor Cyan "`n>> Memory"
 Write-Host "Available:" $PhysicalMemory "GB"
-Write-Host -ForegroundColor Cyan ">> Storage (C:\)"
+
+# Storage
+Write-Host -ForegroundColor Cyan "`n>> Storage (C:\)"
 Write-Host "Capacity:" $DiskC.Capacity "GB"
 Write-Host "Free:" $DiskC.FreeSpaceGB "GB"
-Write-Host -ForegroundColor Cyan ">> Windows"
+
+# Windows
+Write-Host -ForegroundColor Cyan "`n>> Windows"
 Write-Host "Version:" $WinVersion.WindowsVersion
 Write-Host "License status:" $WinLicenseStatus.LicenseStatus
