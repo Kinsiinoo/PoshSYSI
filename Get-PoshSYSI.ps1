@@ -2,7 +2,8 @@
 $Bios = Get-WmiObject Win32_Bios
 $ComputerSystem = Get-WmiObject Win32_ComputerSystem
 $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
-$PhysicalMemory = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
+$PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
+$PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
 $Processor = Get-WmiObject Win32_Processor
 $WinLicenseStatus = Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus
 $WinVersion = Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion
@@ -26,7 +27,10 @@ Write-Host "Status:" $Processor.Status
 
 # Memory
 Write-Host -ForegroundColor Cyan "`n>> Memory"
-Write-Host "Available:" $PhysicalMemory "GB"
+Write-Host "Available:" $PhysicalMemoryCap "GB"
+Write-Host "Manufacturer:" $PhysicalMemory.Manufacturer
+Write-Host "P/N:" $PhysicalMemory.PartNumber
+Write-Host "S/N:" $PhysicalMemory.SerialNumber
 
 # Storage
 Write-Host -ForegroundColor Cyan "`n>> Storage (C:\)"
@@ -35,5 +39,6 @@ Write-Host "Free:" $DiskC.FreeSpaceGB "GB"
 
 # Windows
 Write-Host -ForegroundColor Cyan "`n>> Windows"
+Write-Host "Architecture:" $Processor.AddressWidth "bit"
 Write-Host "Version:" $WinVersion.WindowsVersion
 Write-Host "License status:" $WinLicenseStatus.LicenseStatus
