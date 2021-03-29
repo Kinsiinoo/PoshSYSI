@@ -6,7 +6,7 @@ $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
 $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
 $Processor = Get-WmiObject Win32_Processor
 $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
-$WinVersion = Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion
+$WinVersion = Get-ComputerInfo
 
 # Functions
 function Get-SYSISystemInfo($SystemInfo) {
@@ -15,15 +15,17 @@ function Get-SYSISystemInfo($SystemInfo) {
     Write-Host "Model:" $SystemInfo.Model
 }
 
-function Get-SYSIBiosInfo($BiosInfo) {
+function Get-SYSIBiosInfo($BiosInfo, $BiosType) {
+    Write-Host "Type:" $BiosType.BiosFirmwareType
     Write-Host "Version:" $BiosInfo.SMBIOSBIOSVersion
     Write-Host "S/N:" $BiosInfo.SerialNumber
 }
 
 function Get-SYSIProcessorInfo($ProcessorInfo) {
+    Write-Host "Manufacturer:" $ProcessorInfo.Manufacturer
+    Write-Host "Socket:" $ProcessorInfo.SocketDesignation
     Write-Host "Model:" $ProcessorInfo.Name
     Write-Host "C/LC:" $ProcessorInfo.NumberOfCores "/" $ProcessorInfo.NumberOfLogicalProcessors
-    Write-Host "Status:" $ProcessorInfo.Status
 }
 
 function Get-SYSIMemoryInfo($MemoryInfo, $MemoryInfoCap) {
@@ -51,9 +53,11 @@ function Get-LicenseStatus($WLStatus) {
     }
 }
 
-function Get-SYSIWindowsInfo($WindowsInfo, $WindowsLicInfo, $ArchInfo) {
-    Write-Host "Architecture:" $ArchInfo.AddressWidth "bit"
+function Get-SYSIWindowsInfo($WindowsInfo, $WindowsLicInfo) {
+    Write-Host "Architecture:" $WindowsInfo.OsArchitecture
+    Write-Host "Product name:" $WindowsInfo.OsName
     Write-Host "Version:" $WindowsInfo.WindowsVersion
+    Write-Host "Build:" $WindowsInfo.OsBuildNumber
     Get-LicenseStatus $WindowsLicInfo
 }
 
@@ -63,7 +67,7 @@ Get-SYSISystemInfo $ComputerSystem
 
 # Bios
 Write-Host -ForegroundColor Cyan "`n>> Bios"
-Get-SYSIBiosInfo $Bios
+Get-SYSIBiosInfo $Bios $WinVersion
 
 # Processor
 Write-Host -ForegroundColor Cyan "`n>> Processor"
@@ -79,4 +83,4 @@ Get-SYSIDiskCInfo $DiskC
 
 # Windows
 Write-Host -ForegroundColor Cyan "`n>> Windows"
-Get-SYSIWindowsInfo $WinVersion $WinLicenseStatus $Processor
+Get-SYSIWindowsInfo $WinVersion $WinLicenseStatus
