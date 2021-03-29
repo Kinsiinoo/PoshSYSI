@@ -8,6 +8,36 @@ $Processor = Get-WmiObject Win32_Processor
 $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
 $WinVersion = Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion
 
+# Functions
+function Get-SYSISystemInfo($SystemInfo) {
+    Write-Host "Name:" $SystemInfo.Name
+    Write-Host "User:" $env:USERNAME
+    Write-Host "Model:" $SystemInfo.Model
+}
+
+function Get-SYSIBiosInfo($BiosInfo) {
+    Write-Host "Version:" $BiosInfo.SMBIOSBIOSVersion
+    Write-Host "S/N:" $BiosInfo.SerialNumber
+}
+
+function Get-SYSIProcessorInfo($ProcessorInfo) {
+    Write-Host "Model:" $ProcessorInfo.Name
+    Write-Host "C/LC:" $ProcessorInfo.NumberOfCores "/" $ProcessorInfo.NumberOfLogicalProcessors
+    Write-Host "Status:" $ProcessorInfo.Status
+}
+
+function Get-SYSIMemoryInfo($MemoryInfo, $MemoryInfoCap) {
+    Write-Host "Available:" $MemoryInfoCap "GB"
+    Write-Host "Manufacturer:" $MemoryInfo.Manufacturer
+    Write-Host "P/N:" $MemoryInfo.PartNumber
+    Write-Host "S/N:" $MemoryInfo.SerialNumber
+}
+
+function Get-SYSIDiskCInfo($DiskCInfo) {
+    Write-Host "Capacity:" $DiskCInfo.Capacity "GB"
+    Write-Host "Free:" $DiskCInfo.FreeSpaceGB "GB"
+}
+
 function Get-LicenseStatus($WLStatus) {
     switch ($WLStatus) {
         0 { Write-Host -ForegroundColor DarkRed "Unlicensed"; break }
@@ -21,37 +51,32 @@ function Get-LicenseStatus($WLStatus) {
     }
 }
 
+function Get-SYSIWindowsInfo($WindowsInfo, $WindowsLicInfo, $ArchInfo) {
+    Write-Host "Architecture:" $ArchInfo.AddressWidth "bit"
+    Write-Host "Version:" $WindowsInfo.WindowsVersion
+    Get-LicenseStatus $WindowsLicInfo
+}
+
 # System
 Write-Host -ForegroundColor Cyan ">> System"
-Write-Host "Name:" $ComputerSystem.Name
-Write-Host "User:" $env:USERNAME
-Write-Host "Model:" $ComputerSystem.Model
+Get-SYSISystemInfo $ComputerSystem
 
 # Bios
 Write-Host -ForegroundColor Cyan "`n>> Bios"
-Write-Host "Version:" $Bios.SMBIOSBIOSVersion
-Write-Host "S/N:" $Bios.SerialNumber
+Get-SYSIBiosInfo $Bios
 
 # Processor
 Write-Host -ForegroundColor Cyan "`n>> Processor"
-Write-Host "Model:" $Processor.Name
-Write-Host "C/LC:" $Processor.NumberOfCores "/" $Processor.NumberOfLogicalProcessors
-Write-Host "Status:" $Processor.Status
+Get-SYSIProcessorInfo $Processor
 
 # Memory
 Write-Host -ForegroundColor Cyan "`n>> Memory"
-Write-Host "Available:" $PhysicalMemoryCap "GB"
-Write-Host "Manufacturer:" $PhysicalMemory.Manufacturer
-Write-Host "P/N:" $PhysicalMemory.PartNumber
-Write-Host "S/N:" $PhysicalMemory.SerialNumber
+Get-SYSIMemoryInfo $PhysicalMemory $PhysicalMemoryCap
 
 # Storage
 Write-Host -ForegroundColor Cyan "`n>> Storage (C:\)"
-Write-Host "Capacity:" $DiskC.Capacity "GB"
-Write-Host "Free:" $DiskC.FreeSpaceGB "GB"
+Get-SYSIDiskCInfo $DiskC
 
 # Windows
 Write-Host -ForegroundColor Cyan "`n>> Windows"
-Write-Host "Architecture:" $Processor.AddressWidth "bit"
-Write-Host "Version:" $WinVersion.WindowsVersion
-Get-LicenseStatus $WinLicenseStatus
+Get-SYSIWindowsInfo $WinVersion $WinLicenseStatus $Processor
