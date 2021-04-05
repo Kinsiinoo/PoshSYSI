@@ -82,6 +82,13 @@ function Invoke-Decode {
     }
 }
 
+function Get-SYSIInstalledProgs {
+    $InstalledPrograms = $null
+    $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
+    $InstalledPrograms += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
+    $InstalledPrograms | Sort-Object -Property DisplayName | Format-Table -HideTableHeaders -Wrap
+}
+
 # System
 Write-Host -ForegroundColor Cyan ">> System"
 Get-SYSISystemInfo $ComputerSystem
@@ -105,6 +112,10 @@ Get-SYSIDiskCInfo $DiskC
 # Windows
 Write-Host -ForegroundColor Cyan "`n>> Windows"
 Get-SYSIWindowsInfo $WinVersion $WinLicenseStatus
+
+# Programs
+Write-Host -ForegroundColor Cyan "`n>> Installed programs"
+Get-SYSIInstalledProgs
 
 # Monitor
 Write-Host -ForegroundColor Cyan "`n>> Monitor(s)"
