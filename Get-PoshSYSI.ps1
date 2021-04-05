@@ -2,6 +2,7 @@
 $Bios = Get-WmiObject Win32_Bios
 $ComputerSystem = Get-WmiObject Win32_ComputerSystem
 $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+$Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
 $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
 $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
 $Processor = Get-WmiObject Win32_Processor
@@ -35,6 +36,17 @@ function Get-SYSIMemoryInfo($MemoryInfo, $MemoryInfoCap) {
     Write-Host "S/N:" $MemoryInfo.SerialNumber
 }
 
+function Get-SYSIMonitors($Monitors) {
+    ForEach ($Monitor in $Monitors) {  
+        $MonitorManufacturer = Invoke-Decode $Monitor.ManufacturerName -notmatch 0
+        $MonitorModel = Invoke-Decode $Monitor.UserFriendlyName -notmatch 0
+        $MonitorPCID = Invoke-Decode $Monitor.ProductCodeID -notmatch 0
+        $MonitorSerial = Invoke-Decode $Monitor.SerialNumberID -notmatch 0
+        $MonitorYoM = Invoke-Decode $Monitor.YearOfManufacture -notmatch 0
+        Write-Host "Manufacturer:" $MonitorManufacturer "`nName:" $MonitorModel "`nPCID:" $MonitorPCID "`nS/N:" $MonitorSerial "`nYoM:" $MonitorYoM "`n"
+    }
+}
+
 function Get-SYSIDiskCInfo($DiskCInfo) {
     Write-Host "Capacity:" $DiskCInfo.Capacity "GB"
     Write-Host "Free:" $DiskCInfo.FreeSpaceGB "GB"
@@ -61,6 +73,15 @@ function Get-SYSIWindowsInfo($WindowsInfo, $WindowsLicInfo) {
     Get-LicenseStatus $WindowsLicInfo
 }
 
+function Invoke-Decode {
+    If ($args[0] -is [System.Array]) {
+        [System.Text.Encoding]::ASCII.GetString($args[0])
+    }
+    Else {
+        "No results!"
+    }
+}
+
 # System
 Write-Host -ForegroundColor Cyan ">> System"
 Get-SYSISystemInfo $ComputerSystem
@@ -84,3 +105,7 @@ Get-SYSIDiskCInfo $DiskC
 # Windows
 Write-Host -ForegroundColor Cyan "`n>> Windows"
 Get-SYSIWindowsInfo $WinVersion $WinLicenseStatus
+
+# Monitor
+Write-Host -ForegroundColor Cyan "`n>> Monitor(s)"
+Get-SYSIMonitors $Monitors
