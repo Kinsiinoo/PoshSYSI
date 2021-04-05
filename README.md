@@ -12,6 +12,9 @@ This PowerShell script gives information about the following things on the speci
   - Socket
   - Model
   - Etc.
+- Installed programs (x86 + x64)
+  - Name
+  - Version
 - Monitor(s) *(mostly useful for non-integrated displays)*
   - Model
   - PCID
