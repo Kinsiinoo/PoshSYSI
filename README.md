@@ -37,9 +37,21 @@ This PowerShell script gives information about the following things on the speci
   - Version
   - Etc.
 
+## Screenshots
+
+WIP
+
+## Usage
+
+Run it. :grin:
+
 ## Todo
 
-- [ ] More info... :thinking:
-- [ ] Refactor for easier reuse
-- [ ] GUI
-  - [ ] Multilingual
+- [ ] More info :thinking:
+- [ ] Refactor code into a nice PS module :eyes:
+- [ ] GUI version
+  - [ ] Multilingual interface
+
+## License
+
+PoshSYSI is licensed under the MIT License.
