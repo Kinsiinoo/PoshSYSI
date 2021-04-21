@@ -4,38 +4,36 @@ PowerShell System Information 0.1.0
 
 This PowerShell script gives information about the following things on the specified machine:
 
-- Bios
-  - S/N *(mostly useful on laptops)*
-  - Version
-  - Etc.
-- CPU
-  - Socket
-  - Model
-  - Etc.
-- Installed programs (x86 + x64)
-  - Name
-  - Version
-- Monitor(s) *(mostly useful for non-integrated displays)*
-  - Model
-  - PCID
-  - S/N
-  - Etc.
-- RAM *(mostly useful on laptops)*
-  - Available
-  - Manufacturer
-  - P/N
-  - S/N
-- Storage ( C:\ )
-  - Total/Free
-- System
-  - Model *(mostly useful on laptops)*
-  - Name
-  - User
-- Windows
-  - License status
-  - Product name
-  - Version
-  - Etc.
+Category | Subcategory | Useful for NB | Useful for PC
+---------|-------------|---------------|--------------
+**Bios** |S/N|Yes|No
+||Type|Yes|Yes
+||Version|Yes|Yes
+**CPU** |C/LC|Yes|Yes
+||Manufacturer|Yes|Yes
+||Model|Yes|Yes
+||Socket|No|Yes
+**Installed**|Name|Yes|Yes
+||Version|Yes|Yes
+**Monitor(s)**|Manufacturer|Yes|Yes
+||Name|Yes|Yes
+||PCID|Yes|Yes
+||S/N|Yes|Yes
+||YoM|Yes|Yes
+**RAM**|Available|Yes|Yes
+||Manufacturer|Yes|No
+||P/N|Yes|Yes
+||S/N|Yes|No
+**Storage(C:)**|Capacity|Yes|Yes
+||Free|Yes|Yes
+**System**|Model|Yes|No
+||Name|Yes|Yes
+||User|Yes|Yes
+**Windows**|Architecture|Yes|Yes
+||Build|Yes|Yes
+||License status|Yes|Yes
+||Product name|Yes|Yes
+||Version|Yes|Yes
 
 ## Screenshots
 
