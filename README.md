@@ -1,6 +1,6 @@
 # PoshSYSI
 
-PowerShell System Information
+PowerShell System Information 0.1.0
 
 This PowerShell script gives information about the following things on the specified machine:
 
@@ -41,14 +41,27 @@ This PowerShell script gives information about the following things on the speci
 
 WIP
 
+## Syntax
+
+```PowerShell
+Get-PoshSYSI [[-ComputerName] <string[]>]  [<CommonParameters>]
+```
+
 ## Usage
 
-Run it. :grin:
+For now, only on a local machine:
+
+```PowerShell
+Get-PoshSYSI
+```
 
 ## Todo
 
-- [ ] More info :thinking:
-- [ ] Refactor code into a nice PS module :eyes:
+- [X] More info :thinking:
+- [X] Refactor code into a nice PS module :eyes:
+  - [ ] Run on multiple computer
+  - [ ] Modes (`Full`, `Normal`, `Minimal`)
+  - [ ] Report (maybe `.csv` and/or `.xlsx` and/or `.html`)
 - [ ] GUI version
   - [ ] Multilingual interface
 
