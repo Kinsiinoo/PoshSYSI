@@ -4,7 +4,10 @@
         [Parameter(Position=0,
         ValueFromPipelineByPropertyName=$true)]
         [Alias("CN","MachineName")]
-        [String[]]$ComputerName
+        [String[]]$ComputerName,
+        [Parameter(Position=1)]
+        [ValidateSet("Minimal", "Normal", "Full")]
+        [String]$PoshSYSIMode = "Normal"
     )
 
     # Variables
