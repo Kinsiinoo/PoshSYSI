@@ -1,6 +1,6 @@
 # PoshSYSI
 
-PowerShell System Information 0.1.0
+PowerShell System Information 0.1.1
 
 This PowerShell script gives information about the following things on the specified machine:
 
@@ -42,7 +42,7 @@ WIP
 ## Syntax
 
 ```PowerShell
-Get-PoshSYSI [[-ComputerName] <string[]>]  [<CommonParameters>]
+Get-PoshSYSI [[-ComputerName] <string[]>] [[-PoshSYSIMode] {Minimal | Normal | Full}]  [<CommonParameters>]
 ```
 
 ## Usage
