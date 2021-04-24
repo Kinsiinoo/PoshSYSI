@@ -30,6 +30,16 @@
             foreach ($ComputerItem in $ComputerName) {
                 if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
                     Write-Host "$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
+                    
+                    $Bios = Get-WmiObject Win32_Bios -ComputerName $ComputerItem
+                    $ComputerSystem = Get-WmiObject Win32_ComputerSystem -ComputerName $ComputerItem
+                    $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+                    $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
+                    $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem
+                    $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem | Measure-Object -Property Capacity -Sum).Sum/1GB
+                    $Processor = Get-WmiObject Win32_Processor -ComputerName $ComputerItem
+                    $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
+                    $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
                 } else {
                     Write-Host "$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
                 }
