@@ -13,16 +13,22 @@
         [String]$PoshSYSIRunMode = "Local"
     )
 
-    # Variables
-    $Bios = Get-WmiObject Win32_Bios
-    $ComputerSystem = Get-WmiObject Win32_ComputerSystem
-    $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
-    $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
-    $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
-    $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
-    $Processor = Get-WmiObject Win32_Processor
-    $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
-    $WinVersion = Get-ComputerInfo
+    # Mode specific variables
+    switch ($PoshSYSIRunMode)
+    {
+        'Local' {
+            $Bios = Get-WmiObject Win32_Bios
+            $ComputerSystem = Get-WmiObject Win32_ComputerSystem
+            $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+            $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
+            $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
+            $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
+            $Processor = Get-WmiObject Win32_Processor
+            $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
+            $WinVersion = Get-ComputerInfo
+        }
+        'Remote' {}
+    }
 
     # Functions
     function Get-SYSISystemInfo($SystemInfo) {
