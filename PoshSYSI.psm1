@@ -7,7 +7,10 @@
         [String[]]$ComputerName,
         [Parameter(Position=1)]
         [ValidateSet("Minimal", "Normal", "Full")]
-        [String]$PoshSYSIMode = "Normal"
+        [String]$PoshSYSIMode = "Normal",
+        [Parameter(Position=2)]
+        [ValidateSet("Local", "Remote")]
+        [String]$PoshSYSIRunMode = "Local"
     )
 
     # Variables
