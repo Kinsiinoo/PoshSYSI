@@ -13,41 +13,17 @@
         [String]$PoshSYSIRunMode = "Local"
     )
 
-    switch ($PoshSYSIRunMode)
-    {
-        'Local' {
-            $Bios = Get-WmiObject Win32_Bios
-            $ComputerSystem = Get-WmiObject Win32_ComputerSystem
-            $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
-            $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
-            $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
-            $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
-            $Processor = Get-WmiObject Win32_Processor
-            $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
-            $WinVersion = Get-ComputerInfo
+    # Functions
+
+    function Invoke-Decode {
+        If ($args[0] -is [System.Array]) {
+            [System.Text.Encoding]::ASCII.GetString($args[0])
         }
-        'Remote' {
-            foreach ($ComputerItem in $ComputerName) {
-                if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
-                    Write-Host "$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
-                    
-                    $Bios = Get-WmiObject Win32_Bios -ComputerName $ComputerItem
-                    $ComputerSystem = Get-WmiObject Win32_ComputerSystem -ComputerName $ComputerItem
-                    $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
-                    $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
-                    $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem
-                    $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem | Measure-Object -Property Capacity -Sum).Sum/1GB
-                    $Processor = Get-WmiObject Win32_Processor -ComputerName $ComputerItem
-                    $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
-                    $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
-                } else {
-                    Write-Host "$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
-                }
-            }
+        Else {
+            "No results!"
         }
     }
 
-    # Functions
     function Get-SYSISystemInfo($SystemInfo) {
         Write-Host "Name:" $SystemInfo.Name
         Write-Host "User:" $env:USERNAME
@@ -111,20 +87,59 @@
         Get-LicenseStatus $WindowsLicInfo
     }
 
-    function Invoke-Decode {
-        If ($args[0] -is [System.Array]) {
-            [System.Text.Encoding]::ASCII.GetString($args[0])
-        }
-        Else {
-            "No results!"
-        }
-    }
-
     function Get-SYSIInstalledProgs {
         $InstalledPrograms = $null
         $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
         $InstalledPrograms += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
         $InstalledPrograms | Sort-Object -Property DisplayName | Format-Table -HideTableHeaders -Wrap
+    }
+
+    # Mode
+    function Invoke-SYSIMinimal {
+        
+    }
+
+    function Invoke-SYSINormal {
+        
+    }
+
+    function Invoke-SYSIFull {
+        
+    }
+
+    # RunMode
+    switch ($PoshSYSIRunMode)
+    {
+        'Local' {
+            $Bios = Get-WmiObject Win32_Bios
+            $ComputerSystem = Get-WmiObject Win32_ComputerSystem
+            $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+            $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
+            $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
+            $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
+            $Processor = Get-WmiObject Win32_Processor
+            $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
+            $WinVersion = Get-ComputerInfo
+        }
+        'Remote' {
+            foreach ($ComputerItem in $ComputerName) {
+                if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
+                    Write-Host "$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
+                    
+                    $Bios = Get-WmiObject Win32_Bios -ComputerName $ComputerItem
+                    $ComputerSystem = Get-WmiObject Win32_ComputerSystem -ComputerName $ComputerItem
+                    $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+                    $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
+                    $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem
+                    $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem | Measure-Object -Property Capacity -Sum).Sum/1GB
+                    $Processor = Get-WmiObject Win32_Processor -ComputerName $ComputerItem
+                    $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
+                    $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
+                } else {
+                    Write-Host "$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
+                }
+            }
+        }
     }
 
     # System
