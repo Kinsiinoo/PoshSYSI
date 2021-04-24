@@ -13,7 +13,6 @@
         [String]$PoshSYSIRunMode = "Local"
     )
 
-    # Mode specific variables
     switch ($PoshSYSIRunMode)
     {
         'Local' {
@@ -27,7 +26,15 @@
             $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
             $WinVersion = Get-ComputerInfo
         }
-        'Remote' {}
+        'Remote' {
+            foreach ($ComputerItem in $ComputerName) {
+                if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
+                    Write-Host "$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
+                } else {
+                    Write-Host "$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
+                }
+            }
+        }
     }
 
     # Functions
