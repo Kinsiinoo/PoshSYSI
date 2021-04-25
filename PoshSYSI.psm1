@@ -94,6 +94,7 @@
         $InstalledPrograms | Sort-Object -Property DisplayName | Format-Table -HideTableHeaders -Wrap
     }
 
+    # Modes and Invoke mode function
     function Invoke-SYSIMinimal {
         # System
         Write-Host -ForegroundColor Cyan ">> System"
@@ -163,6 +164,8 @@
             $Processor = Get-WmiObject Win32_Processor
             $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
             $WinVersion = Get-ComputerInfo
+
+            Invoke-SYSIMode
         }
         'Remote' {
             foreach ($ComputerItem in $ComputerName) {
@@ -178,6 +181,8 @@
                     $Processor = Get-WmiObject Win32_Processor -ComputerName $ComputerItem
                     $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
                     $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
+
+                    Invoke-SYSIMode
                 } else {
                     Write-Host "$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
                 }
