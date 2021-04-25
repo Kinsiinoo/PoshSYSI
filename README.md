@@ -1,6 +1,6 @@
 # PoshSYSI
 
-PowerShell System Information 0.1.1
+PowerShell System Information 0.2.0
 
 This PowerShell script gives information about the following things on the specified machine:
 
@@ -41,24 +41,52 @@ WIP
 
 ## Syntax
 
+Local:
+
 ```PowerShell
-Get-PoshSYSI [[-ComputerName] <string[]>] [[-PoshSYSIMode] {Minimal | Normal | Full}]  [<CommonParameters>]
+Get-PoshSYSI [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote}  [<CommonParameters>]
+```
+
+Remote:
+
+```PowerShell
+Get-PoshSYSI [-ComputerName] <string[]> [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote}  [<CommonParameters>]
 ```
 
 ## Usage
 
-For now, only on a local machine:
+Local without mode:
 
 ```PowerShell
-Get-PoshSYSI
+Get-PoshSYSI -PoshSYSIRunMode Local
+```
+
+Local with mode:
+
+```PowerShell
+Get-PoshSYSI -PoshSYSIMode {Minimal | Normal | Full} -PoshSYSIRunMode Local
+```
+
+Remote without mode:
+
+```PowerShell
+Get-PoshSYSI -ComputerName EXAMPLE -PoshSYSIRunMode Remote
+Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIRunMode Remote
+```
+
+Remote with mode:
+
+```PowerShell
+Get-PoshSYSI -ComputerName EXAMPLE -PoshSYSIMode {Minimal | Normal | Full} -PoshSYSIRunMode Remote
+Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | Full} -PoshSYSIRunMode Remote
 ```
 
 ## Todo
 
 - [X] More info :thinking:
 - [X] Refactor code into a nice PS module :eyes:
-  - [ ] Run on multiple computer
-  - [ ] Modes (`Full`, `Normal`, `Minimal`)
+  - [X] Run on multiple computer (not tested YET)
+  - [X] Modes (`Full`, `Normal`, `Minimal`)
   - [ ] Report (maybe `.csv` and/or `.xlsx` and/or `.html`)
 - [ ] GUI version
   - [ ] Multilingual interface
