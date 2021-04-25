@@ -1,20 +1,21 @@
 ﻿function Get-PoshSYSI {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'LOCAL')]
     param (
-        [Parameter(Position=0,
-        ValueFromPipelineByPropertyName=$true)]
+        [Parameter(Mandatory=$true,Position=0,ValueFromPipelineByPropertyName=$true,ParameterSetName="REMOTE")]
+        [ValidateNotNullOrEmpty()]
         [Alias("CN","MachineName")]
         [String[]]$ComputerName,
-        [Parameter(Position=1)]
+        [Parameter(Position=0,ParameterSetName="LOCAL")]
+        [Parameter(Position=1,ParameterSetName="REMOTE")]
         [ValidateSet("Minimal", "Normal", "Full")]
         [String]$PoshSYSIMode = "Normal",
-        [Parameter(Position=2)]
+        [Parameter(Mandatory=$true,Position=1,ParameterSetName="LOCAL")]
+        [Parameter(Mandatory=$true,Position=2,ParameterSetName="REMOTE")]
         [ValidateSet("Local", "Remote")]
-        [String]$PoshSYSIRunMode = "Local"
+        [String]$PoshSYSIRunMode
     )
 
     # Functions
-
     function Invoke-Decode {
         If ($args[0] -is [System.Array]) {
             [System.Text.Encoding]::ASCII.GetString($args[0])
