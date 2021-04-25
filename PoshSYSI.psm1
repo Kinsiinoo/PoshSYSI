@@ -96,7 +96,21 @@
 
     # Mode
     function Invoke-SYSIMinimal {
-        
+        # System
+        Write-Host -ForegroundColor Cyan ">> System"
+        Get-SYSISystemInfo $ComputerSystem
+
+        # Bios
+        Write-Host -ForegroundColor Cyan "`n>> Bios"
+        Get-SYSIBiosInfo $Bios $WinVersion
+
+        # Processor
+        Write-Host -ForegroundColor Cyan "`n>> Processor"
+        Get-SYSIProcessorInfo $Processor
+
+        # Memory
+        Write-Host -ForegroundColor Cyan "`n>> Memory"
+        Get-SYSIMemoryInfo $PhysicalMemory $PhysicalMemoryCap
     }
 
     function Invoke-SYSINormal {
@@ -141,22 +155,6 @@
             }
         }
     }
-
-    # System
-    Write-Host -ForegroundColor Cyan ">> System"
-    Get-SYSISystemInfo $ComputerSystem
-
-    # Bios
-    Write-Host -ForegroundColor Cyan "`n>> Bios"
-    Get-SYSIBiosInfo $Bios $WinVersion
-
-    # Processor
-    Write-Host -ForegroundColor Cyan "`n>> Processor"
-    Get-SYSIProcessorInfo $Processor
-
-    # Memory
-    Write-Host -ForegroundColor Cyan "`n>> Memory"
-    Get-SYSIMemoryInfo $PhysicalMemory $PhysicalMemoryCap
 
     # Storage
     Write-Host -ForegroundColor Cyan "`n>> Storage (C:\)"
