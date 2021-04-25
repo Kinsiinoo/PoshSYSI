@@ -114,7 +114,17 @@
     }
 
     function Invoke-SYSINormal {
-        
+        # Storage
+        Write-Host -ForegroundColor Cyan "`n>> Storage (C:\)"
+        Get-SYSIDiskCInfo $DiskC
+
+        # Monitor
+        Write-Host -ForegroundColor Cyan "`n>> Monitor(s)"
+        Get-SYSIMonitors $Monitors
+
+        # Windows
+        Write-Host -ForegroundColor Cyan "`n>> Windows"
+        Get-SYSIWindowsInfo $WinVersion $WinLicenseStatus
     }
 
     function Invoke-SYSIFull {
@@ -156,20 +166,8 @@
         }
     }
 
-    # Storage
-    Write-Host -ForegroundColor Cyan "`n>> Storage (C:\)"
-    Get-SYSIDiskCInfo $DiskC
-
-    # Windows
-    Write-Host -ForegroundColor Cyan "`n>> Windows"
-    Get-SYSIWindowsInfo $WinVersion $WinLicenseStatus
-
     # Programs
     Write-Host -ForegroundColor Cyan "`n>> Installed programs"
     Get-SYSIInstalledProgs
-
-    # Monitor
-    Write-Host -ForegroundColor Cyan "`n>> Monitor(s)"
-    Get-SYSIMonitors $Monitors
 
 }
