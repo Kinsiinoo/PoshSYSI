@@ -53,6 +53,14 @@ Remote:
 Get-PoshSYSI [-ComputerName] <string[]> [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote}  [<CommonParameters>]
 ```
 
+## Mode
+
+**Minimal:** System, Bios, Processor, Memory
+
+**Normal:** + Storage (C:), Monitor(s), Windows
+
+**Full:** + Programs (x64 + x86)
+
 ## Usage
 
 Local without mode:
