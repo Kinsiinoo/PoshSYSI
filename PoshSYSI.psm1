@@ -94,7 +94,6 @@
         $InstalledPrograms | Sort-Object -Property DisplayName | Format-Table -HideTableHeaders -Wrap
     }
 
-    # Mode
     function Invoke-SYSIMinimal {
         # System
         Write-Host -ForegroundColor Cyan ">> System"
@@ -131,6 +130,24 @@
         # Programs
         Write-Host -ForegroundColor Cyan "`n>> Installed programs"
         Get-SYSIInstalledProgs
+    }
+
+    function Invoke-SYSIMode {
+        switch ($PoshSYSIMode)
+            {
+                'Minimal' {
+                    Invoke-SYSIMinimal
+                }
+                'Normal' {
+                    Invoke-SYSIMinimal
+                    Invoke-SYSINormal
+                }
+                'Full' {
+                    Invoke-SYSIMinimal
+                    Invoke-SYSINormal
+                    Invoke-SYSIFull
+                }
+            }
     }
 
     # RunMode
