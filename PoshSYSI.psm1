@@ -128,7 +128,9 @@
     }
 
     function Invoke-SYSIFull {
-        
+        # Programs
+        Write-Host -ForegroundColor Cyan "`n>> Installed programs"
+        Get-SYSIInstalledProgs
     }
 
     # RunMode
@@ -165,9 +167,5 @@
             }
         }
     }
-
-    # Programs
-    Write-Host -ForegroundColor Cyan "`n>> Installed programs"
-    Get-SYSIInstalledProgs
 
 }
