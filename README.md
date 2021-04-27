@@ -91,11 +91,13 @@ Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | F
 
 ## Todo
 
-- [X] More info :thinking:
-- [X] Refactor code into a nice PS module :eyes:
-  - [X] Run on multiple computer (not tested YET)
+- [ ] CLI version
+  - [X] More info
+  - [X] Refactor code into a nice PS module :eyes:
+  - [X] Run on multiple computer (Tested on a huge AD)
   - [X] Modes (`Full`, `Normal`, `Minimal`)
   - [ ] Report (maybe `.csv` and/or `.xlsx` and/or `.html`)
+  - [ ] Extend storage info
 - [ ] GUI version
   - [ ] Multilingual interface
 
