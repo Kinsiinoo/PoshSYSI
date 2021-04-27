@@ -89,6 +89,11 @@ Get-PoshSYSI -ComputerName EXAMPLE -PoshSYSIMode {Minimal | Normal | Full} -Posh
 Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | Full} -PoshSYSIRunMode Remote
 ```
 
+## Known issues
+
+- [#1](https://github.com/Kinsiinoo/PoshSYSI/issues/1) System info: wrong user
+- [#2](https://github.com/Kinsiinoo/PoshSYSI/issues/2) Wait for variables
+
 ## Todo
 
 - [ ] CLI version
@@ -98,6 +103,7 @@ Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | F
   - [X] Modes (`Full`, `Normal`, `Minimal`)
   - [ ] Report (maybe `.csv` and/or `.xlsx` and/or `.html`)
   - [ ] Extend storage info
+  - [ ] BitLocker info
 - [ ] GUI version
   - [ ] Multilingual interface
 
