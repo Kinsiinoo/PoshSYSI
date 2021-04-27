@@ -25,18 +25,21 @@
         }
     }
 
+    # "Basic" system info
     function Get-SYSISystemInfo($SystemInfo) {
         Write-Host "Name:" $SystemInfo.Name
         Write-Host "User:" $env:USERNAME
         Write-Host "Model:" $SystemInfo.Model
     }
 
+    # Bios info
     function Get-SYSIBiosInfo($BiosInfo, $BiosType) {
         Write-Host "Type:" $BiosType.BiosFirmwareType
         Write-Host "Version:" $BiosInfo.SMBIOSBIOSVersion
         Write-Host "S/N:" $BiosInfo.SerialNumber
     }
 
+    # Processor info
     function Get-SYSIProcessorInfo($ProcessorInfo) {
         Write-Host "Manufacturer:" $ProcessorInfo.Manufacturer
         Write-Host "Socket:" $ProcessorInfo.SocketDesignation
@@ -44,6 +47,7 @@
         Write-Host "C/LC:" $ProcessorInfo.NumberOfCores "/" $ProcessorInfo.NumberOfLogicalProcessors
     }
 
+    # Memory info
     function Get-SYSIMemoryInfo($MemoryInfo, $MemoryInfoCap) {
         Write-Host "Available:" $MemoryInfoCap "GB"
         Write-Host "Manufacturer:" $MemoryInfo.Manufacturer
@@ -51,6 +55,7 @@
         Write-Host "S/N:" $MemoryInfo.SerialNumber
     }
 
+    # Attached monitors
     function Get-SYSIMonitors($Monitors) {
         ForEach ($Monitor in $Monitors) {  
             $MonitorManufacturer = Invoke-Decode $Monitor.ManufacturerName -notmatch 0
@@ -62,11 +67,13 @@
         }
     }
 
+    # Disk Info (C:\)
     function Get-SYSIDiskCInfo($DiskCInfo) {
         Write-Host "Capacity:" $DiskCInfo.Capacity "GB"
         Write-Host "Free:" $DiskCInfo.FreeSpaceGB "GB"
     }
 
+    # Windows license status
     function Get-LicenseStatus($WLStatus) {
         switch ($WLStatus) {
             0 { Write-Host -ForegroundColor DarkRed "Unlicensed"; break }
@@ -80,6 +87,7 @@
         }
     }
 
+    # Windows info
     function Get-SYSIWindowsInfo($WindowsInfo, $WindowsLicInfo) {
         Write-Host "Architecture:" $WindowsInfo.OsArchitecture
         Write-Host "Product name:" $WindowsInfo.OsName
@@ -88,6 +96,7 @@
         Get-LicenseStatus $WindowsLicInfo
     }
 
+    # Installed programs (x64 + x86)
     function Get-SYSIInstalledProgs {
         $InstalledPrograms = $null
         $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
@@ -138,13 +147,16 @@
         switch ($PoshSYSIMode)
             {
                 'Minimal' {
+                    Write-Verbose "Mode: Minimal"
                     Invoke-SYSIMinimal
                 }
                 'Normal' {
+                    Write-Verbose "Mode: Normal"
                     Invoke-SYSIMinimal
                     Invoke-SYSINormal
                 }
                 'Full' {
+                    Write-Verbose "Mode: Full"
                     Invoke-SYSIMinimal
                     Invoke-SYSINormal
                     Invoke-SYSIFull
@@ -156,6 +168,7 @@
     switch ($PoshSYSIRunMode)
     {
         'Local' {
+            Write-Verbose "RunMode: Local"
             $Bios = Get-WmiObject Win32_Bios
             $ComputerSystem = Get-WmiObject Win32_ComputerSystem
             $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
@@ -169,6 +182,7 @@
             Invoke-SYSIMode
         }
         'Remote' {
+            Write-Verbose "RunMode: Remote"
             foreach ($ComputerItem in $ComputerName) {
                 if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
                     Write-Host "$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
