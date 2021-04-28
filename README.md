@@ -1,6 +1,6 @@
 # PoshSYSI
 
-PowerShell System Information 0.2.0
+PowerShell System Information 0.2.1
 
 This PowerShell script gives information about the following things on the specified machine:
 
@@ -91,7 +91,7 @@ Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | F
 
 ## Known issues
 
-- [#1](https://github.com/Kinsiinoo/PoshSYSI/issues/1) System info: wrong user
+- ~~[#1](https://github.com/Kinsiinoo/PoshSYSI/issues/1) System info: wrong user~~
 - [#2](https://github.com/Kinsiinoo/PoshSYSI/issues/2) Wait for variables
 
 ## Todo

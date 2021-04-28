@@ -28,7 +28,7 @@
     # "Basic" system info
     function Get-SYSISystemInfo($SystemInfo) {
         Write-Host "Name:" $SystemInfo.Name
-        Write-Host "User:" $env:USERNAME
+        Write-Host "User:" ($SystemInfo.UserName).Replace("$($env:COMPUTERNAME)\","")
         Write-Host "Model:" $SystemInfo.Model
     }
 
