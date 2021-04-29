@@ -170,6 +170,7 @@
         'Local' {
             Write-Verbose "RunMode: Local"
             $Bios = Get-WmiObject Win32_Bios
+            $BitLocker = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
             $ComputerSystem = Get-WmiObject Win32_ComputerSystem
             $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
             $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
@@ -188,6 +189,7 @@
                     Write-Host "$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
                     
                     $Bios = Get-WmiObject Win32_Bios -ComputerName $ComputerItem
+                    #$BitLocker = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') })
                     $ComputerSystem = Get-WmiObject Win32_ComputerSystem -ComputerName $ComputerItem
                     $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
                     $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
