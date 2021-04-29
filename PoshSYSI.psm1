@@ -53,6 +53,11 @@
         }
     }
 
+    # BitLocker info
+    function Get-SYSIBitLockerInfo($BitLockerStatus) {
+        Get-BitLockerStatus $BitLockerStatus
+    }
+
     # Processor info
     function Get-SYSIProcessorInfo($ProcessorInfo) {
         Write-Host "Manufacturer:" $ProcessorInfo.Manufacturer
@@ -138,6 +143,10 @@
     }
 
     function Invoke-SYSINormal {
+        # BitLocker
+        Write-Host -ForegroundColor Cyan "`n>> BitLocker (C:\)"
+        Get-SYSIBitLockerInfo $BitLockerStatus
+
         # Storage
         Write-Host -ForegroundColor Cyan "`n>> Storage (C:\)"
         Get-SYSIDiskCInfo $DiskC
