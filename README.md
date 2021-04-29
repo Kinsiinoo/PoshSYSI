@@ -1,6 +1,6 @@
 # PoshSYSI
 
-PowerShell System Information 0.2.1
+PowerShell System Information 0.2.2.1
 
 This PowerShell script gives information about the following things on the specified machine:
 
@@ -9,6 +9,7 @@ Category | Subcategory | Useful for NB | Useful for PC
 **Bios** |S/N|Yes|No
 ||Type|Yes|Yes
 ||Version|Yes|Yes
+**BitLocker**|Status|Yes|Yes
 **CPU** |C/LC|Yes|Yes
 ||Manufacturer|Yes|Yes
 ||Model|Yes|Yes
@@ -57,7 +58,7 @@ Get-PoshSYSI [-ComputerName] <string[]> [[-PoshSYSIMode] {Minimal | Normal | Ful
 
 **Minimal:** System, Bios, Processor, Memory
 
-**Normal:** + Storage (C:), Monitor(s), Windows
+**Normal:** + BitLocker (C:), Storage (C:), Monitor(s), Windows
 
 **Full:** + Programs (x64 + x86)
 
@@ -103,7 +104,8 @@ Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | F
   - [X] Modes (`Full`, `Normal`, `Minimal`)
   - [ ] Report (maybe `.csv` and/or `.xlsx` and/or `.html`)
   - [ ] Extend storage info
-  - [ ] BitLocker info
+  - [X] BitLocker info
+  - [ ] Fine-tune some output to make them easier to read
 - [ ] GUI version
   - [ ] Multilingual interface
 
