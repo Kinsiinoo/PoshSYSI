@@ -40,7 +40,7 @@
     }
 
     # BitLocker status
-    function Get-BitLockerStatus($BLStatus) {
+    function Get-SYSIBLStatus($BLStatus) {
         switch ($BLStatus) {
             1 { Write-Host -ForegroundColor DarkGreen "BitLocker on (Encrypted)"; break }
             2 { Write-Host -ForegroundColor DarkRed "BitLocker off (Decrypted)"; break }
@@ -55,7 +55,7 @@
 
     # BitLocker info
     function Get-SYSIBitLockerInfo($BitLockerStatus) {
-        Get-BitLockerStatus $BitLockerStatus
+        Get-SYSIBLStatus $BitLockerStatus
     }
 
     # Processor info
@@ -93,7 +93,7 @@
     }
 
     # Windows license status
-    function Get-LicenseStatus($WLStatus) {
+    function Get-SYSILicenseStatus($WLStatus) {
         switch ($WLStatus) {
             0 { Write-Host -ForegroundColor DarkRed "Unlicensed"; break }
             1 { Write-Host -ForegroundColor DarkGreen "Licensed"; break }
@@ -112,7 +112,7 @@
         Write-Host "Product name:" $WindowsInfo.OsName
         Write-Host "Version:" $WindowsInfo.WindowsVersion
         Write-Host "Build:" $WindowsInfo.OsBuildNumber
-        Get-LicenseStatus $WindowsLicInfo
+        Get-SYSILicenseStatus $WindowsLicInfo
     }
 
     # Installed programs (x64 + x86)
