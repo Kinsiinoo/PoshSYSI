@@ -39,6 +39,20 @@
         Write-Host "S/N:" $BiosInfo.SerialNumber
     }
 
+    # BitLocker status
+    function Get-BitLockerStatus($BLStatus) {
+        switch ($BLStatus) {
+            1 { Write-Host -ForegroundColor DarkGreen "BitLocker on (Encrypted)"; break }
+            2 { Write-Host -ForegroundColor DarkRed "BitLocker off (Decrypted)"; break }
+            3 { Write-Host -ForegroundColor Yellow "Encryption In Progress/Paused"; break }
+            4 { Write-Host -ForegroundColor Red "Decryption In Progress/Paused"; break }
+            5 { Write-Host -ForegroundColor Yellow "BitLocker suspended (Encrypted)"; break }
+            6 { Write-Host -ForegroundColor DarkRed "BitLocker on (Locked)"; break }
+            8 { Write-Host -ForegroundColor Magenta "BitLocker waiting for activation (Encrypted)"; break }
+            Default { Write-Host -ForegroundColor DarkRed "Unknown value"; break }
+        }
+    }
+
     # Processor info
     function Get-SYSIProcessorInfo($ProcessorInfo) {
         Write-Host "Manufacturer:" $ProcessorInfo.Manufacturer
@@ -170,7 +184,7 @@
         'Local' {
             Write-Verbose "RunMode: Local"
             $Bios = Get-WmiObject Win32_Bios
-            $BitLocker = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
+            $BitLockerStatus = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
             $ComputerSystem = Get-WmiObject Win32_ComputerSystem
             $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
             $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
@@ -189,7 +203,7 @@
                     Write-Host "$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
                     
                     $Bios = Get-WmiObject Win32_Bios -ComputerName $ComputerItem
-                    #$BitLocker = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') })
+                    #$BitLockerStatus = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') })
                     $ComputerSystem = Get-WmiObject Win32_ComputerSystem -ComputerName $ComputerItem
                     $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
                     $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
