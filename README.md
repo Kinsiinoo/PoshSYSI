@@ -94,6 +94,7 @@ Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | F
 
 - ~~[#1](https://github.com/Kinsiinoo/PoshSYSI/issues/1) System info: wrong user~~
 - [#2](https://github.com/Kinsiinoo/PoshSYSI/issues/2) Wait for variables
+- [#3](https://github.com/Kinsiinoo/PoshSYSI/issues/3) Remote: Installed programs
 
 ## Todo
 
