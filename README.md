@@ -45,13 +45,13 @@ WIP
 Local:
 
 ```PowerShell
-Get-PoshSYSI [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote}  [<CommonParameters>]
+Get-PoshSYSI [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote} [[-Report]]  [<CommonParameters>]
 ```
 
 Remote:
 
 ```PowerShell
-Get-PoshSYSI [-ComputerName] <string[]> [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote}  [<CommonParameters>]
+Get-PoshSYSI [-ComputerName] <string[]> [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote} [[-Report]]  [<CommonParameters>]
 ```
 
 ## Mode
@@ -90,6 +90,12 @@ Get-PoshSYSI -ComputerName EXAMPLE -PoshSYSIMode {Minimal | Normal | Full} -Posh
 Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | Full} -PoshSYSIRunMode Remote
 ```
 
+### Report
+
+A report can be generated using the `-Report` switch.
+
+ Default output folder path: `C:\Temp\PoshSYSI\`
+
 ## Known issues
 
 - ~~[#1](https://github.com/Kinsiinoo/PoshSYSI/issues/1) System info: wrong user~~
@@ -103,7 +109,7 @@ Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | F
   - [X] Refactor code into a nice PS module :eyes:
   - [X] Run on multiple computer (Tested on a huge AD)
   - [X] Modes (`Full`, `Normal`, `Minimal`)
-  - [ ] Report (maybe `.csv` and/or `.xlsx` and/or `.html`)
+  - [X] Report ~~(maybe `.csv` and/or `.xlsx` and/or `.html`)~~
   - [ ] Extend storage info
   - [X] BitLocker info
   - [ ] Fine-tune some output to make them easier to read
