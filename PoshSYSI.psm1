@@ -15,6 +15,15 @@
         [String]$PoshSYSIRunMode
     )
 
+    # Report variables
+    $PoshSYSIOutPath = "C:\Temp\PoshSYSI\"
+    $PoshSYSIRunTime = (Get-Date).ToString('yyyy-MM-dd-HH-mm-ss')
+
+    # Test report path and Create folder if it is not exist
+    If(!(Test-Path -Path $PoshSYSIOutPath)){
+        New-Item -ItemType Directory -Force -Path $PoshSYSIOutPath
+    }
+
     # Functions
     function Invoke-Decode {
         If ($args[0] -is [System.Array]) {
