@@ -216,7 +216,7 @@
             $WinVersion = Get-ComputerInfo
 
             if ($Report) {
-                Invoke-SYSIMode *> $PoshSYSIOutPath\PoshSYSI_Local_$PoshSYSIRunTime.log
+                Invoke-SYSIMode *> "$($PoshSYSIOutPath)\PoshSYSI_Local_$($PoshSYSIRunTime).log"
             } else {
                 Invoke-SYSIMode
             }
@@ -239,12 +239,12 @@
                     $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
 
                     if ($Report) {
-                        Invoke-SYSIMode *> $PoshSYSIOutPath\PoshSYSI_Remote_$PoshSYSIRunTime.log
+                        Invoke-SYSIMode *> "$($PoshSYSIOutPath)\$($ComputerItem)_PoshSYSI_Remote_$($PoshSYSIRunTime).log"
                     } else {
                         Invoke-SYSIMode
                     }
                 } else {
-                    Write-Host "$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
+                    Write-Host "`n$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
                 }
             }
         }
