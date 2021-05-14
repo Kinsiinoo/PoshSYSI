@@ -215,13 +215,17 @@
             $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
             $WinVersion = Get-ComputerInfo
 
-            Invoke-SYSIMode
+            if ($Report) {
+                Invoke-SYSIMode *> $PoshSYSIOutPath\PoshSYSI_Local_$PoshSYSIRunTime.log
+            } else {
+                Invoke-SYSIMode
+            }
         }
         'Remote' {
             Write-Verbose "RunMode: Remote"
             foreach ($ComputerItem in $ComputerName) {
                 if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
-                    Write-Host "$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
+                    Write-Host "`n$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
                     
                     $Bios = Get-WmiObject Win32_Bios -ComputerName $ComputerItem
                     #$BitLockerStatus = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') })
@@ -234,7 +238,11 @@
                     $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
                     $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
 
-                    Invoke-SYSIMode
+                    if ($Report) {
+                        Invoke-SYSIMode *> $PoshSYSIOutPath\PoshSYSI_Remote_$PoshSYSIRunTime.log
+                    } else {
+                        Invoke-SYSIMode
+                    }
                 } else {
                     Write-Host "$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
                 }
