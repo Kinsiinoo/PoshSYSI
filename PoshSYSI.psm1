@@ -12,7 +12,10 @@
         [Parameter(Mandatory=$true,Position=1,ParameterSetName="LOCAL")]
         [Parameter(Mandatory=$true,Position=2,ParameterSetName="REMOTE")]
         [ValidateSet("Local", "Remote")]
-        [String]$PoshSYSIRunMode
+        [String]$PoshSYSIRunMode,
+        [Parameter(Mandatory=$false,Position=2,ParameterSetName="LOCAL")]
+        [Parameter(Mandatory=$false,Position=3,ParameterSetName="REMOTE")]
+        [Switch]$Report
     )
 
     # Report variables
