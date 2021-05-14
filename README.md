@@ -1,6 +1,6 @@
 # PoshSYSI
 
-PowerShell System Information 0.2.3.0
+PowerShell System Information 0.2.3.1
 
 This PowerShell script gives information about the following things on the specified machine:
 
