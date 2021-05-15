@@ -178,6 +178,7 @@
         Get-SYSIInstalledProgs
     }
 
+    # Mode based on $PoshSYSIMode validateset
     function Invoke-SYSIMode {
         switch ($PoshSYSIMode)
             {
@@ -215,6 +216,7 @@
             $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
             $WinVersion = Get-ComputerInfo
 
+            # Generate report if -Report:$true
             if ($Report) {
                 Invoke-SYSIMode *> "$($PoshSYSIOutPath)\PoshSYSI_Local_$($PoshSYSIRunTime).log"
             } else {
@@ -238,6 +240,7 @@
                     $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
                     $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
 
+                    # Generate report if -Report:$true
                     if ($Report) {
                         Invoke-SYSIMode *> "$($PoshSYSIOutPath)\$($ComputerItem)_PoshSYSI_Remote_$($PoshSYSIRunTime).log"
                     } else {
