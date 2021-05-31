@@ -88,7 +88,7 @@
 
     # Attached monitors
     function Get-SYSIMonitors($Monitors) {
-        ForEach ($Monitor in $Monitors) {  
+        ForEach ($Monitor in $Monitors) {
             $MonitorManufacturer = Invoke-Decode $Monitor.ManufacturerName -notmatch 0
             $MonitorModel = Invoke-Decode $Monitor.UserFriendlyName -notmatch 0
             $MonitorPCID = Invoke-Decode $Monitor.ProductCodeID -notmatch 0
