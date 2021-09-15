@@ -38,10 +38,11 @@
     }
 
     # "Basic" system info
-    function Get-SYSISystemInfo($SystemInfo) {
+    function Get-SYSISystemInfo($SystemInfo, $SystemInstallDateInfo) {
         Write-Host "Name:" $SystemInfo.Name
         Write-Host "User:" ($SystemInfo.UserName).Replace("$($env:COMPUTERNAME)\","")
         Write-Host "Model:" $SystemInfo.Model
+        Write-Host "Install (approx):" $SystemInstallDateInfo -ForegroundColor Yellow
     }
 
     # Bios info
@@ -139,7 +140,7 @@
     function Invoke-SYSIMinimal {
         # System
         Write-Host -ForegroundColor Cyan ">> System"
-        Get-SYSISystemInfo $ComputerSystem
+        Get-SYSISystemInfo $ComputerSystem $ComputerSystemInstall
 
         # Bios
         Write-Host -ForegroundColor Cyan "`n>> Bios"
@@ -208,6 +209,7 @@
             $Bios = Get-WmiObject Win32_Bios
             $BitLockerStatus = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
             $ComputerSystem = Get-WmiObject Win32_ComputerSystem
+            $ComputerSystemInstall = (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime
             $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
             $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
             $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
@@ -232,6 +234,7 @@
                     $Bios = Get-WmiObject Win32_Bios -ComputerName $ComputerItem
                     #$BitLockerStatus = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') })
                     $ComputerSystem = Get-WmiObject Win32_ComputerSystem -ComputerName $ComputerItem
+                    $ComputerSystemInstall = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime })
                     $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
                     $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
                     $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem
