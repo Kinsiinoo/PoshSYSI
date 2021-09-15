@@ -1,6 +1,6 @@
 # PoshSYSI
 
-PowerShell System Information 0.2.3.1
+PowerShell System Information 0.2.3.2
 
 This PowerShell script gives information about the following things on the specified machine:
 
@@ -30,6 +30,7 @@ Category | Subcategory | Useful for NB | Useful for PC
 **System**|Model|Yes|No
 ||Name|Yes|Yes
 ||User|Yes|Yes
+||Install(approx)|Yes|Yes
 **Windows**|Architecture|Yes|Yes
 ||Build|Yes|Yes
 ||License status|Yes|Yes
