@@ -1,8 +1,17 @@
-# PoshSYSI
+# PoshSYSI (PowerShell System Information) - 0.2.3.2
 
-PowerShell System Information 0.2.3.2
+<p align="center">
+  <a href="https://github.com/Kinsiinoo/PoshSYSI"><img src="https://img.shields.io/github/languages/top/kinsiinoo/poshsysi?style=for-the-badge"></a>
+  <a href="https://github.com/Kinsiinoo/PoshSYSI"><img src="https://img.shields.io/github/languages/code-size/kinsiinoo/poshsysi?style=for-the-badge"></a>
+  <a href="https://github.com/Kinsiinoo/PoshSYSI"><img src="https://img.shields.io/github/license/kinsiinoo/poshsysi?style=for-the-badge"></a>
+</p>
 
-This PowerShell script gives information about the following things on the specified machine:
+<p align="center">
+  <a href="https://github.com/Kinsiinoo/PoshSYSI/releases/"><img src="https://img.shields.io/github/v/release/kinsiinoo/poshsysi?style=for-the-badge"></a>
+  <a href="https://github.com/Kinsiinoo/PoshSYSI"><img src="https://img.shields.io/github/last-commit/kinsiinoo/poshsysi?style=for-the-badge"></a>
+</p>
+
+This PowerShell module gives information about the following things on the specified machine:
 
 Category | Subcategory | Useful for NB | Useful for PC
 ---------|-------------|---------------|--------------
@@ -116,6 +125,10 @@ A report can be generated using the `-Report` switch.
   - [ ] Fine-tune some output to make them easier to read
 - [ ] GUI version
   - [ ] Multilingual interface
+
+## Changelog
+
+WIP
 
 ## License
 
