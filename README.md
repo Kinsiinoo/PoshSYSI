@@ -111,6 +111,7 @@ A report can be generated using the `-Report` switch.
 - ~~[#1](https://github.com/Kinsiinoo/PoshSYSI/issues/1) System info: wrong user~~
 - [#2](https://github.com/Kinsiinoo/PoshSYSI/issues/2) Wait for variables
 - [#3](https://github.com/Kinsiinoo/PoshSYSI/issues/3) Remote: Installed programs
+- ~~[#4](https://github.com/Kinsiinoo/PoshSYSI/issues/4) Change WMI to CIM~~
 
 ## Todo
 

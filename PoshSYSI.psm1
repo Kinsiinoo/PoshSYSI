@@ -206,16 +206,16 @@
     {
         'Local' {
             Write-Verbose "RunMode: Local"
-            $Bios = Get-WmiObject Win32_Bios
+            $Bios = Get-CimInstance -ClassName Win32_Bios
             $BitLockerStatus = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
-            $ComputerSystem = Get-WmiObject Win32_ComputerSystem
+            $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
             $ComputerSystemInstall = (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime
-            $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
-            $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi
-            $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory
-            $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
-            $Processor = Get-WmiObject Win32_Processor
-            $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
+            $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+            $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi
+            $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory
+            $PhysicalMemoryCap = (Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
+            $Processor = Get-CimInstance -ClassName Win32_Processor
+            $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
             $WinVersion = Get-ComputerInfo
 
             # Generate report if -Report:$true
@@ -231,16 +231,16 @@
                 if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
                     Write-Host "`n$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
                     
-                    $Bios = Get-WmiObject Win32_Bios -ComputerName $ComputerItem
+                    $Bios = Get-CimInstance -ClassName Win32_Bios -ComputerName $ComputerItem
                     #$BitLockerStatus = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') })
-                    $ComputerSystem = Get-WmiObject Win32_ComputerSystem -ComputerName $ComputerItem
+                    $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ComputerName $ComputerItem
                     $ComputerSystemInstall = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime })
-                    $DiskC = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
-                    $Monitors = Get-WmiObject WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
-                    $PhysicalMemory = Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem
-                    $PhysicalMemoryCap = (Get-WmiObject Win32_PhysicalMemory -ComputerName $ComputerItem | Measure-Object -Property Capacity -Sum).Sum/1GB
-                    $Processor = Get-WmiObject Win32_Processor -ComputerName $ComputerItem
-                    $WinLicenseStatus = (Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
+                    $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+                    $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
+                    $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $ComputerItem
+                    $PhysicalMemoryCap = (Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $ComputerItem | Measure-Object -Property Capacity -Sum).Sum/1GB
+                    $Processor = Get-CimInstance -ClassName Win32_Processor -ComputerName $ComputerItem
+                    $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
                     $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
 
                     # Generate report if -Report:$true
