@@ -101,8 +101,10 @@
 
     # Disk Info (C:\)
     function Get-SYSIDiskCInfo($DiskCInfo) {
-        Write-Host "Capacity:" $DiskCInfo.Capacity "GB"
-        Write-Host "Free:" $DiskCInfo.FreeSpaceGB "GB"
+        $Capacity = "{0:N2}" -f ($DiskCInfo.Size /1GB)
+        $Free = "{0:N2}" -f ($DiskCInfo.FreeSpace /1GB)
+        Write-Host "Capacity:" $Capacity "GB"
+        Write-Host "Free:" $Free "GB"
     }
 
     # Windows license status
@@ -223,7 +225,7 @@
             try {
                 $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
                 $ComputerSystemInstall = (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime
-                $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+                $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'"
                 $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi
                 $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory
                 $PhysicalMemoryCap = ($PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
@@ -250,7 +252,7 @@
                         $Bios = Get-CimInstance -ClassName Win32_Bios -ComputerName $ComputerItem
                         $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ComputerName $ComputerItem
                         $ComputerSystemInstall = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime })
-                        $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+                        $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem
                         $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
                         $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $ComputerItem
                         $PhysicalMemoryCap = ($PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
