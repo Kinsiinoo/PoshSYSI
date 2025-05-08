@@ -27,6 +27,19 @@
         New-Item -ItemType Directory -Force -Path $PoshSYSIOutPath
     }
 
+    # Global PSCustomObject for report details
+    $Global:PoshSYSIData = [PSCustomObject]@{
+        System           = $null
+        Bios             = $null
+        Processor        = $null
+        Memory           = $null
+        Disk             = $null
+        Windows          = $null
+        BitLocker        = $null
+        Monitors         = @()
+        InstalledPrograms= @()
+    }
+
     # Functions
     function Invoke-Decode {
         If ($args[0] -is [System.Array]) {
@@ -39,6 +52,13 @@
 
     # "Basic" system info
     function Get-SYSISystemInfo($SystemInfo, $SystemInstallDateInfo) {
+        $temp = [PSCustomObject]@{
+            Name        = $SystemInfo.Name
+            User        = ($SystemInfo.UserName).Replace("$($env:COMPUTERNAME)\","")
+            Model       = $SystemInfo.Model
+            InstallDate = $SystemInstallDateInfo
+        }
+        $Global:PoshSYSIData.System = $temp
         Write-Host "Name:" $SystemInfo.Name
         Write-Host "User:" ($SystemInfo.UserName).Replace("$($env:COMPUTERNAME)\","")
         Write-Host "Model:" $SystemInfo.Model
@@ -47,6 +67,12 @@
 
     # Bios info
     function Get-SYSIBiosInfo($BiosInfo, $BiosType) {
+        $temp = [PSCustomObject]@{
+            Type    = $BiosType.BiosFirmwareType
+            Version = $BiosInfo.SMBIOSBIOSVersion
+            SN      = $BiosInfo.SerialNumber
+        }
+        $Global:PoshSYSIData.Bios = $temp
         Write-Host "Type:" $BiosType.BiosFirmwareType
         Write-Host "Version:" $BiosInfo.SMBIOSBIOSVersion
         Write-Host "S/N:" $BiosInfo.SerialNumber
@@ -68,11 +94,20 @@
 
     # BitLocker info
     function Get-SYSIBitLockerInfo($BitLockerStatus) {
+        $Global:PoshSYSIData.BitLocker = $BitLockerStatus
         Get-SYSIBLStatus $BitLockerStatus
     }
 
     # Processor info
     function Get-SYSIProcessorInfo($ProcessorInfo) {
+        $temp = [PSCustomObject]@{
+            Manufacturer = $ProcessorInfo.Manufacturer
+            Socket       = $ProcessorInfo.SocketDesignation
+            Model        = $ProcessorInfo.Name
+            Cores        = $ProcessorInfo.NumberOfCores
+            LogicalCores = $ProcessorInfo.NumberOfLogicalProcessors
+        }
+        $Global:PoshSYSIData.Processor = $temp
         Write-Host "Manufacturer:" $ProcessorInfo.Manufacturer
         Write-Host "Socket:" $ProcessorInfo.SocketDesignation
         Write-Host "Model:" $ProcessorInfo.Name
@@ -81,6 +116,13 @@
 
     # Memory info
     function Get-SYSIMemoryInfo($MemoryInfo, $MemoryInfoCap) {
+        $temp = [PSCustomObject]@{
+            Available  = $MemoryInfoCap
+            Manufacturer = $MemoryInfo.Manufacturer
+            PartNumber   = $MemoryInfo.PartNumber
+            SerialNumber = $MemoryInfo.SerialNumber
+        }
+        $Global:PoshSYSIData.Memory = $temp
         Write-Host "Available:" $MemoryInfoCap "GB"
         Write-Host "Manufacturer:" $MemoryInfo.Manufacturer
         Write-Host "P/N:" $MemoryInfo.PartNumber
@@ -89,20 +131,35 @@
 
     # Attached monitors
     function Get-SYSIMonitors($Monitors) {
+        $monitorList = @()
         ForEach ($Monitor in $Monitors) {
             $MonitorManufacturer = Invoke-Decode $Monitor.ManufacturerName -notmatch 0
             $MonitorModel = Invoke-Decode $Monitor.UserFriendlyName -notmatch 0
             $MonitorPCID = Invoke-Decode $Monitor.ProductCodeID -notmatch 0
             $MonitorSerial = Invoke-Decode $Monitor.SerialNumberID -notmatch 0
             $MonitorYoM = Invoke-Decode $Monitor.YearOfManufacture -notmatch 0
+            $temp = [PSCustomObject]@{
+                Manufacturer = $MonitorManufacturer
+                Name         = $MonitorModel
+                PCID         = $MonitorPCID
+                Serial       = $MonitorSerial
+                Year         = $MonitorYoM
+            }
+            $monitorList += $temp
             Write-Host "Manufacturer:" $MonitorManufacturer "`nName:" $MonitorModel "`nPCID:" $MonitorPCID "`nS/N:" $MonitorSerial "`nYoM:" $MonitorYoM "`n"
         }
+        $Global:PoshSYSIData.Monitors = $monitorList
     }
 
     # Disk Info (C:\)
     function Get-SYSIDiskCInfo($DiskCInfo) {
         $Capacity = "{0:N2}" -f ($DiskCInfo.Size /1GB)
         $Free = "{0:N2}" -f ($DiskCInfo.FreeSpace /1GB)
+        $temp = [PSCustomObject]@{
+            CapacityGB = $Capacity
+            FreeGB     = $Free
+        }
+        $Global:PoshSYSIData.Disk = $temp
         Write-Host "Capacity:" $Capacity "GB"
         Write-Host "Free:" $Free "GB"
     }
@@ -123,6 +180,14 @@
 
     # Windows info
     function Get-SYSIWindowsInfo($WindowsInfo, $WindowsLicInfo) {
+        $temp = [PSCustomObject]@{
+            Architecture = $WindowsInfo.OsArchitecture
+            ProductName  = $WindowsInfo.OsName
+            Version      = $WindowsInfo.WindowsVersion
+            Build        = $WindowsInfo.OsBuildNumber
+            LicenseStatus= $WindowsLicInfo
+        }
+        $Global:PoshSYSIData.Windows = $temp
         Write-Host "Architecture:" $WindowsInfo.OsArchitecture
         Write-Host "Product name:" $WindowsInfo.OsName
         Write-Host "Version:" $WindowsInfo.WindowsVersion
@@ -137,6 +202,9 @@
             $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
             $InstalledPrograms += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
             $InstalledPrograms | Sort-Object -Property DisplayName | Format-Table -HideTableHeaders -Wrap
+            $InstalledPrograms | ForEach-Object {
+                $Global:PoshSYSIData.InstalledPrograms += $_
+            }
         } catch {
             Write-Error "Error retrieving installed programs: $($_.Exception.Message)"
         }
@@ -275,4 +343,6 @@
             }
         }
     }
+
+    Write-Output $Global:PoshSYSIData
 }
