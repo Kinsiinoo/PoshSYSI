@@ -130,10 +130,14 @@
 
     # Installed programs (x64 + x86)
     function Get-SYSIInstalledProgs {
-        $InstalledPrograms = $null
-        $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
-        $InstalledPrograms += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
-        $InstalledPrograms | Sort-Object -Property DisplayName | Format-Table -HideTableHeaders -Wrap
+        try {
+            $InstalledPrograms = $null
+            $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
+            $InstalledPrograms += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
+            $InstalledPrograms | Sort-Object -Property DisplayName | Format-Table -HideTableHeaders -Wrap
+        } catch {
+            Write-Error "Error retrieving installed programs: $($_.Exception.Message)"
+        }
     }
 
     # Modes and Invoke mode function
@@ -206,17 +210,29 @@
     {
         'Local' {
             Write-Verbose "RunMode: Local"
-            $Bios = Get-CimInstance -ClassName Win32_Bios
-            $BitLockerStatus = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
-            $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
-            $ComputerSystemInstall = (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime
-            $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
-            $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi
-            $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory
-            $PhysicalMemoryCap = (Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
-            $Processor = Get-CimInstance -ClassName Win32_Processor
-            $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
-            $WinVersion = Get-ComputerInfo
+            try {
+                $Bios = Get-CimInstance -ClassName Win32_Bios
+            } catch {
+                Write-Error "Error retrieving BIOS info: $($_.Exception.Message)"
+            }
+            try {
+                $BitLockerStatus = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
+            } catch {
+                Write-Error "Error retrieving BitLocker status: $($_.Exception.Message)"
+            }
+            try {
+                $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
+                $ComputerSystemInstall = (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime
+                $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+                $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi
+                $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory
+                $PhysicalMemoryCap = (Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
+                $Processor = Get-CimInstance -ClassName Win32_Processor
+                $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
+                $WinVersion = Get-ComputerInfo
+            } catch {
+                Write-Error "Error retrieving system info: $($_.Exception.Message)"
+            }
 
             # Generate report if -Report:$true
             if ($Report) {
@@ -230,18 +246,20 @@
             foreach ($ComputerItem in $ComputerName) {
                 if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
                     Write-Host "`n$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
-                    
-                    $Bios = Get-CimInstance -ClassName Win32_Bios -ComputerName $ComputerItem
-                    #$BitLockerStatus = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') })
-                    $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ComputerName $ComputerItem
-                    $ComputerSystemInstall = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime })
-                    $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
-                    $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
-                    $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $ComputerItem
-                    $PhysicalMemoryCap = (Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $ComputerItem | Measure-Object -Property Capacity -Sum).Sum/1GB
-                    $Processor = Get-CimInstance -ClassName Win32_Processor -ComputerName $ComputerItem
-                    $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
-                    $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
+                    try {
+                        $Bios = Get-CimInstance -ClassName Win32_Bios -ComputerName $ComputerItem
+                        $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ComputerName $ComputerItem
+                        $ComputerSystemInstall = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime })
+                        $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem | Select-Object -Property DeviceID, @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}}, @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+                        $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
+                        $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $ComputerItem
+                        $PhysicalMemoryCap = (Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $ComputerItem | Measure-Object -Property Capacity -Sum).Sum/1GB
+                        $Processor = Get-CimInstance -ClassName Win32_Processor -ComputerName $ComputerItem
+                        $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
+                        $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
+                    } catch {
+                        Write-Error "Error retrieving info from $($ComputerItem): $($_.Exception.Message)"
+                    }
 
                     # Generate report if -Report:$true
                     if ($Report) {
@@ -255,5 +273,4 @@
             }
         }
     }
-
 }
