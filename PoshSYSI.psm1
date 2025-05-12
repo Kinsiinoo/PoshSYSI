@@ -209,7 +209,7 @@ function Get-SYSIMonitors {
         Retrieves and displays information about attached monitors.
     .DESCRIPTION
         Collects and shows details for each attached monitor, including manufacturer, model name, product code ID, serial number, and year of manufacture.
-        Decoded values are stored in the $Script:PoshSYSIData.Monitors array.
+        Decoded values are stored in the $Script:PoshSYSIData.Monitors list.
     .PARAMETER Monitors
         An array of CIM instance objects containing monitor information (e.g., from WmiMonitorID).
     .EXAMPLE
@@ -219,7 +219,6 @@ function Get-SYSIMonitors {
     param (
         [Parameter(Mandatory=$true)]$Monitors
     )
-    $monitorList = @()
     ForEach ($Monitor in $Monitors) {
         $MonitorManufacturer = Invoke-Decode $Monitor.ManufacturerName
         $MonitorModel = Invoke-Decode $Monitor.UserFriendlyName
@@ -233,10 +232,9 @@ function Get-SYSIMonitors {
             Serial       = $MonitorSerial
             Year         = $MonitorYoM
         }
-        $monitorList += $temp
+        $Script:PoshSYSIData.Monitors.Add($temp)
         Write-Host "Manufacturer:" $MonitorManufacturer "`nName:" $MonitorModel "`nPCID:" $MonitorPCID "`nS/N:" $MonitorSerial "`nYoM:" $MonitorYoM "`n"
     }
-    $Script:PoshSYSIData.Monitors = $monitorList
 }
 
 # Disk Info (C:\)
@@ -343,12 +341,16 @@ function Get-SYSIInstalledProgs {
         Displays and stores a list of installed programs.
     #>
     try {
-        $InstalledPrograms = $null
+        $InstalledPrograms = @()
         $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
         $InstalledPrograms += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
-        $InstalledPrograms | Sort-Object -Property DisplayName | Format-Table -HideTableHeaders -Wrap
-        $InstalledPrograms | ForEach-Object {
-            $Script:PoshSYSIData.InstalledPrograms += $_
+        
+        $FilteredPrograms = $InstalledPrograms | Where-Object { $_.DisplayName } | Sort-Object -Property DisplayName
+        
+        $FilteredPrograms | Format-Table -HideTableHeaders -Wrap
+        
+        foreach ($prog in $FilteredPrograms) {
+            $Script:PoshSYSIData.InstalledPrograms.Add($prog)
         }
     } catch {
         Write-Error "Error retrieving installed programs: $($_.Exception.Message)"
@@ -554,8 +556,8 @@ function Get-PoshSYSI {
         Disk             = $null
         Windows          = $null
         BitLocker        = $null
-        Monitors         = @()
-        InstalledPrograms= @()
+        Monitors         = [System.Collections.Generic.List[PSObject]]::new()
+        InstalledPrograms= [System.Collections.Generic.List[PSObject]]::new()
     }
 
     # Invoke mode function
