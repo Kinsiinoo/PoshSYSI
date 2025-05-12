@@ -1,4 +1,4 @@
-# PoshSYSI (PowerShell System Information) - 0.2.3.2
+# PoshSYSI (PowerShell System Information) - 0.3.0.0
 
 <p align="center">
   <a href="https://github.com/Kinsiinoo/PoshSYSI"><img src="https://img.shields.io/github/languages/top/kinsiinoo/poshsysi?style=for-the-badge"></a>
@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Kinsiinoo/PoshSYSI/releases/"><img src="https://img.shields.io/github/v/release/kinsiinoo/poshsysi?style=for-the-badge"></a>
+  <a href="https://github.com/Kinsiinoo/PoshSYSI/releases/"><img src="https://img.shields.io/github/v/release/kinsiinoo/poshsysi?style=for-the-badge&label=Release"></a>
   <a href="https://github.com/Kinsiinoo/PoshSYSI"><img src="https://img.shields.io/github/last-commit/kinsiinoo/poshsysi?style=for-the-badge"></a>
 </p>
 
@@ -55,13 +55,13 @@ WIP
 Local:
 
 ```PowerShell
-Get-PoshSYSI [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote} [[-Report]]  [<CommonParameters>]
+Get-PoshSYSI [-PoshSYSIRunMode Local] [[-PoshSYSIMode] <string>] [[-Report] <bool>] [[-ReportPath] <string>] [<CommonParameters>]
 ```
 
 Remote:
 
 ```PowerShell
-Get-PoshSYSI [-ComputerName] <string[]> [[-PoshSYSIMode] {Minimal | Normal | Full}] [-PoshSYSIRunMode] {Local | Remote} [[-Report]]  [<CommonParameters>]
+Get-PoshSYSI -ComputerName <string[]> [-PoshSYSIRunMode Remote] [[-PoshSYSIMode] <string>] [[-Report] <bool>] [[-ReportPath] <string>] [<CommonParameters>]
 ```
 
 ## Mode
@@ -104,13 +104,14 @@ Get-PoshSYSI -ComputerName EXAMPLE1,EXAMPLE2 -PoshSYSIMode {Minimal | Normal | F
 
 A report can be generated using the `-Report` switch.
 
- Default output folder path: `C:\Temp\PoshSYSI\`
+Default output folder path: `C:\Temp\PoshSYSI\`
+You can specify a custom path using the `-ReportPath` parameter.
 
 ## Known issues
 
 - ~~[#1](https://github.com/Kinsiinoo/PoshSYSI/issues/1) System info: wrong user~~
-- [#2](https://github.com/Kinsiinoo/PoshSYSI/issues/2) Wait for variables
-- [#3](https://github.com/Kinsiinoo/PoshSYSI/issues/3) Remote: Installed programs
+- [#2](https://github.com/Kinsiinoo/PoshSYSI/issues/2) Wait for variables (Partially addressed by improved error handling and CIM session stability)
+- [#3](https://github.com/Kinsiinoo/PoshSYSI/issues/3) Remote: Installed programs (Still an issue for remote 'Full' mode, documented in module help)
 - ~~[#4](https://github.com/Kinsiinoo/PoshSYSI/issues/4) Change WMI to CIM~~
 
 ## Todo
@@ -123,13 +124,22 @@ A report can be generated using the `-Report` switch.
   - [X] Report ~~(maybe `.csv` and/or `.xlsx` and/or `.html`)~~
   - [ ] Extend storage info
   - [X] BitLocker info
-  - [ ] Fine-tune some output to make them easier to read
+  - [X] Fine-tune some output to make them easier to read
 - [ ] GUI version
   - [ ] Multilingual interface
 
 ## Changelog
 
-WIP
+### Version 0.3.0.0
+- Added optional `ReportPath` parameter for custom report output directory.
+- Improved data collection performance using generic lists for Monitors and InstalledPrograms.
+- Refactored `Invoke-SYSIMode` logic for clarity and efficiency.
+- Enhanced remote connection handling using CIM sessions for most operations, improving reliability and performance.
+- Implemented more robust and detailed error handling with a dedicated helper function.
+- Updated comment-based help and inline comments for clarity and accuracy.
+- Known issue: In 'Full' mode for remote computers, installed programs are currently retrieved from the machine running `Get-PoshSYSI`, not the remote target.
+
+For older versions, please refer to the commit history or release tags.
 
 ## License
 
