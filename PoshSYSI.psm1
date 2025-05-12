@@ -590,17 +590,12 @@ function Get-PoshSYSI {
     {
         'Local' {
             Write-Verbose "RunMode: Local"
+            # Clear lists for the current run (in case of multiple calls in the same session with different modes)
+            $Script:PoshSYSIData.Monitors.Clear()
+            $Script:PoshSYSIData.InstalledPrograms.Clear()
             try {
                 $Bios = Get-CimInstance -ClassName Win32_Bios
-            } catch {
-                Write-Error "Error retrieving BIOS info: $($_.Exception.Message)"
-            }
-            try {
                 $BitLockerStatus = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
-            } catch {
-                Write-Error "Error retrieving BitLocker status: $($_.Exception.Message)"
-            }
-            try {
                 $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
                 $ComputerSystemInstall = (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime
                 $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'"
@@ -632,32 +627,64 @@ function Get-PoshSYSI {
                 }
             }
             foreach ($ComputerItem in $ComputerName) {
-                if (Test-Connection -ComputerName $ComputerItem -Quiet -Count 1) {
-                    Write-Host "`n$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
-                    try {
-                        $Bios = Get-CimInstance -ClassName Win32_Bios -ComputerName $ComputerItem
-                        $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ComputerName $ComputerItem
-                        $ComputerSystemInstall = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime })
-                        $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $ComputerItem
-                        $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -ComputerName $ComputerItem
-                        $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -ComputerName $ComputerItem
-                        $PhysicalMemoryCap = ($PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
-                        $Processor = Get-CimInstance -ClassName Win32_Processor -ComputerName $ComputerItem
-                        $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ComputerName $ComputerItem | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
-                        $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
-                    } catch {
-                        Write-Error "Error retrieving info from $($ComputerItem): $($_.Exception.Message)"
-                    }
+                # Clear data for the current remote computer
+                $Script:PoshSYSIData.System = $null
+                $Script:PoshSYSIData.Bios = $null
+                $Script:PoshSYSIData.Processor = $null
+                $Script:PoshSYSIData.Memory = $null
+                $Script:PoshSYSIData.Disk = $null
+                $Script:PoshSYSIData.Windows = $null
+                $Script:PoshSYSIData.BitLocker = $null
+                $Script:PoshSYSIData.Monitors.Clear()
+                $Script:PoshSYSIData.InstalledPrograms.Clear()
 
-                    # Generate report if -Report:$true
-                    if ($Report) {
-                        # Directory is already ensured to exist if $Report is true (created before loop)
-                        Invoke-SYSIMode *> (Join-Path -Path $ReportPath -ChildPath "$($ComputerItem)_PoshSYSI_Remote_$($PoshSYSIRunTime).log")
-                    } else {
-                        Invoke-SYSIMode
+                $cimSession = $null
+                try {
+                    $cimSessionOptions = New-CimSessionOption -Protocol WSMAN
+                    $cimSession = New-CimSession -ComputerName $ComputerItem -SessionOption $cimSessionOptions -ErrorAction Stop
+                    
+                    Write-Host "`n$($ComputerItem)" -BackgroundColor DarkGreen -ForegroundColor White
+                    
+                    try {
+                        # Use the CimSession for all CIM queries
+                        $Bios = Get-CimInstance -ClassName Win32_Bios -CimSession $cimSession
+                        $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -CimSession $cimSession
+                        $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -CimSession $cimSession
+                        $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -CimSession $cimSession
+                        $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -CimSession $cimSession
+                        if ($PhysicalMemory) {
+                            $PhysicalMemoryCap = ($PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
+                        } else {
+                            $PhysicalMemoryCap = 0
+                        }
+                        $Processor = Get-CimInstance -ClassName Win32_Processor -CimSession $cimSession
+                        $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" -CimSession $cimSession | Where-Object { $_.PartialProductKey } | Select-Object -ExpandProperty LicenseStatus -ErrorAction SilentlyContinue)
+                        
+                        # Invoke-Command for operations not suitable for direct CIM or requiring script blocks
+                        $ComputerSystemInstall = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { 
+                            try { (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" -ErrorAction Stop | Select-Object -ExpandProperty CreationTime -First 1) } catch { $null }
+                        })
+                        $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
+                        $BitLockerStatus = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { 
+                            try { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') } catch { $null }
+                        })
+
+                        # Invoke data processing and display functions
+                        if ($Report) {
+                            Invoke-SYSIMode *> (Join-Path -Path $ReportPath -ChildPath "$($ComputerItem)_PoshSYSI_Remote_$($PoshSYSIRunTime).log")
+                        } else {
+                            Invoke-SYSIMode
+                        }
+                    } catch {
+                        Write-Error "Error retrieving specific info from $($ComputerItem): $($_.Exception.Message)"
                     }
-                } else {
-                    Write-Host "`n$($ComputerItem) not reachable!" -BackgroundColor DarkRed -ForegroundColor White
+                } catch {
+                    Write-Host "`n$($ComputerItem) not reachable or CIM session creation failed!" -BackgroundColor DarkRed -ForegroundColor White
+                    Write-Verbose "CIM Connection error for $($ComputerItem): $($_.Exception.Message)"
+                } finally {
+                    if ($cimSession) {
+                        Remove-CimSession -CimSession $cimSession
+                    }
                 }
             }
         }
