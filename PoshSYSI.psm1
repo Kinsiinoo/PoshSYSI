@@ -570,24 +570,19 @@ function Get-PoshSYSI {
             Invoke-SYSINormal, and Invoke-SYSIFull functions based on the $PoshSYSIMode parameter of Get-PoshSYSI.
             It uses variables from the Get-PoshSYSI scope (e.g., $ComputerSystem, $Bios, etc.).
         #>
-        switch ($PoshSYSIMode)
-            {
-                'Minimal' {
-                    Write-Verbose "Mode: Minimal"
-                    Invoke-SYSIMinimal -ComputerSystem $ComputerSystem -ComputerSystemInstall $ComputerSystemInstall -Bios $Bios -WinVersion $WinVersion -Processor $Processor -PhysicalMemory $PhysicalMemory -PhysicalMemoryCap $PhysicalMemoryCap
-                }
-                'Normal' {
-                    Write-Verbose "Mode: Normal"
-                    Invoke-SYSIMinimal -ComputerSystem $ComputerSystem -ComputerSystemInstall $ComputerSystemInstall -Bios $Bios -WinVersion $WinVersion -Processor $Processor -PhysicalMemory $PhysicalMemory -PhysicalMemoryCap $PhysicalMemoryCap
-                    Invoke-SYSINormal -BitLockerStatus $BitLockerStatus -DiskC $DiskC -Monitors $Monitors -WinVersion $WinVersion -WinLicenseStatus $WinLicenseStatus
-                }
-                'Full' {
-                    Write-Verbose "Mode: Full"
-                    Invoke-SYSIMinimal -ComputerSystem $ComputerSystem -ComputerSystemInstall $ComputerSystemInstall -Bios $Bios -WinVersion $WinVersion -Processor $Processor -PhysicalMemory $PhysicalMemory -PhysicalMemoryCap $PhysicalMemoryCap
-                    Invoke-SYSINormal -BitLockerStatus $BitLockerStatus -DiskC $DiskC -Monitors $Monitors -WinVersion $WinVersion -WinLicenseStatus $WinLicenseStatus
-                    Invoke-SYSIFull
-                }
-            }
+        
+        Write-Verbose "Mode: $PoshSYSIMode - Running Minimal information set"
+        Invoke-SYSIMinimal -ComputerSystem $ComputerSystem -ComputerSystemInstall $ComputerSystemInstall -Bios $Bios -WinVersion $WinVersion -Processor $Processor -PhysicalMemory $PhysicalMemory -PhysicalMemoryCap $PhysicalMemoryCap
+
+        if ($PoshSYSIMode -in @("Normal", "Full")) {
+            Write-Verbose "Mode: $PoshSYSIMode - Running Normal information set"
+            Invoke-SYSINormal -BitLockerStatus $BitLockerStatus -DiskC $DiskC -Monitors $Monitors -WinVersion $WinVersion -WinLicenseStatus $WinLicenseStatus
+        }
+        
+        if ($PoshSYSIMode -eq "Full") {
+            Write-Verbose "Mode: $PoshSYSIMode - Running Full information set"
+            Invoke-SYSIFull
+        }
     }
 
     # RunMode
