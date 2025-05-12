@@ -30,6 +30,7 @@ function Get-SYSISystemInfo {
         Retrieves and displays basic system information.
     .DESCRIPTION
         Collects and shows fundamental system details like computer name, current user, model, and OS installation date.
+        The current user is derived based on the context of execution (local or remote).
         It also stores this information in the $Script:PoshSYSIData.System object.
     .PARAMETER SystemInfo
         A CIM instance object containing system information (e.g., from Win32_ComputerSystem).
@@ -209,7 +210,7 @@ function Get-SYSIMonitors {
         Retrieves and displays information about attached monitors.
     .DESCRIPTION
         Collects and shows details for each attached monitor, including manufacturer, model name, product code ID, serial number, and year of manufacture.
-        Decoded values are stored in the $Script:PoshSYSIData.Monitors list.
+        Decoded values are added to the $Script:PoshSYSIData.Monitors list (a System.Collections.Generic.List[PSObject]).
     .PARAMETER Monitors
         An array of CIM instance objects containing monitor information (e.g., from WmiMonitorID).
     .EXAMPLE
@@ -335,15 +336,16 @@ function Get-SYSIInstalledProgs {
         Retrieves and displays a list of installed programs.
     .DESCRIPTION
         Queries the registry for installed programs (both 32-bit and 64-bit applications) and displays their names and versions.
-        The list is sorted by display name and stored in $Script:PoshSYSIData.InstalledPrograms.
+        The list is sorted by display name and items are added to the $Script:PoshSYSIData.InstalledPrograms list (a System.Collections.Generic.List[PSObject]).
+        Uses an internal error handling helper ($PoshSYSI_ErrorHelper) for more detailed error reporting if issues occur during registry queries.
     .EXAMPLE
         Get-SYSIInstalledProgs
         Displays and stores a list of installed programs.
     #>
     try {
         $InstalledPrograms = @()
-        $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
-        $InstalledPrograms += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion
+        $InstalledPrograms += Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction Stop | Select-Object DisplayName, DisplayVersion
+        $InstalledPrograms += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction Stop | Select-Object DisplayName, DisplayVersion
         
         $FilteredPrograms = $InstalledPrograms | Where-Object { $_.DisplayName } | Sort-Object -Property DisplayName
         
@@ -353,7 +355,8 @@ function Get-SYSIInstalledProgs {
             $Script:PoshSYSIData.InstalledPrograms.Add($prog)
         }
     } catch {
-        Write-Error "Error retrieving installed programs: $($_.Exception.Message)"
+        Write-Error ($PoshSYSI_ErrorHelper.Invoke($_, "Error retrieving installed programs", $env:COMPUTERNAME))
+        Write-Verbose "Detailed error in Get-SYSIInstalledProgs: $($($_) | Format-List * | Out-String)"
     }
 }
 
@@ -477,6 +480,10 @@ function Get-PoshSYSI {
     .DESCRIPTION
         Get-PoshSYSI retrieves detailed system information including hardware, 
         operating system, and installed software from local or remote computers.
+        For remote operations, it utilizes CIM sessions for efficient data retrieval and robust error handling.
+        Specific data points like OS installation date, full OS version details (via Get-ComputerInfo), 
+        and BitLocker status on remote machines are gathered using Invoke-Command against the established CIM session.
+        Note: In 'Full' mode for remote computers, installed programs are currently retrieved from the machine running Get-PoshSYSI, not the remote target.
 
     .PARAMETER ComputerName
         Specifies the remote computers to retrieve information from. Used with -PoshSYSIRunMode Remote.
@@ -515,6 +522,7 @@ function Get-PoshSYSI {
     .OUTPUTS
         System.Management.Automation.PSCustomObject
         Returns a PSCustomObject ($Script:PoshSYSIData) containing all collected information.
+        The 'Monitors' and 'InstalledPrograms' properties are of type System.Collections.Generic.List[PSObject].
         The console output is for display purposes; the object contains the structured data.
     #>
     [CmdletBinding(DefaultParameterSetName = 'LOCAL')]
@@ -538,6 +546,56 @@ function Get-PoshSYSI {
         [Parameter(Mandatory=$false,Position=4,ParameterSetName="REMOTE")]
         [string]$ReportPath = "C:\Temp\PoshSYSI\"
     )
+
+    # Helper function for creating detailed Error Records
+    function New-PoshSYSIErrorRecord {
+        <#
+        .SYNOPSIS
+            Internal helper function to create standardized, detailed ErrorRecord objects.
+        .DESCRIPTION
+            This function takes an original PowerShell error record, a custom message, and a target object string
+            to construct a new, more informative ErrorRecord. It's used to provide consistent error feedback
+            within PoshSYSI.
+        .PARAMETER OriginalErrorRecord
+            The original System.Management.Automation.ErrorRecord (typically from a catch block as $_).
+        .PARAMETER CustomMessage
+            A custom string message to prepend or use as the main message for the new error record.
+        .PARAMETER TargetObject
+            A string identifying the target of the operation that failed (e.g., computer name, component).
+        .OUTPUTS
+            System.Management.Automation.ErrorRecord
+            A new, detailed ErrorRecord object.
+        #>
+        param(
+            [Parameter(Mandatory=$true)]
+            [System.Management.Automation.ErrorRecord]$OriginalErrorRecord,
+            [Parameter(Mandatory=$true)]
+            [string]$CustomMessage,
+            [Parameter(Mandatory=$true)]
+            [string]$TargetObject
+        )
+        $errorDetails = @{
+            Message         = $CustomMessage
+            Category        = $OriginalErrorRecord.CategoryInfo.Category
+            ErrorID         = $OriginalErrorRecord.FullyQualifiedErrorId
+            Exception       = $OriginalErrorRecord.Exception.Message
+            Target          = $TargetObject
+            ScriptStackTrace = $OriginalErrorRecord.ScriptStackTrace
+            InvocationInfo  = $OriginalErrorRecord.InvocationInfo
+        }
+        $newException = New-Object System.Exception($errorDetails.Message, $OriginalErrorRecord.Exception)
+        $newErrorRecord = New-Object System.Management.Automation.ErrorRecord(
+            $newException,
+            $errorDetails.ErrorID,
+            $errorDetails.Category,
+            $errorDetails.Target
+        )
+        if ($errorDetails.InvocationInfo) {
+            $newErrorRecord.SetInvocationInfo($errorDetails.InvocationInfo)
+        }
+        return $newErrorRecord
+    }
+    $Script:PoshSYSI_ErrorHelper = ${function:New-PoshSYSIErrorRecord}
 
     # Report variables
     $PoshSYSIRunTime = (Get-Date).ToString('yyyy-MM-dd-HH-mm-ss')
@@ -566,9 +624,11 @@ function Get-PoshSYSI {
         .SYNOPSIS
             Internal helper function to orchestrate information gathering based on PoshSYSIMode.
         .DESCRIPTION
-            This function is not intended for direct external use. It calls the appropriate Invoke-SYSIMinimal, 
-            Invoke-SYSINormal, and Invoke-SYSIFull functions based on the $PoshSYSIMode parameter of Get-PoshSYSI.
-            It uses variables from the Get-PoshSYSI scope (e.g., $ComputerSystem, $Bios, etc.).
+            This function is not intended for direct external use. It calls Invoke-SYSIMinimal by default.
+            If PoshSYSIMode is 'Normal' or 'Full', it subsequently calls Invoke-SYSINormal.
+            If PoshSYSIMode is 'Full', it then calls Invoke-SYSIFull.
+            It uses variables from the Get-PoshSYSI scope (e.g., $ComputerSystem, $Bios, etc.) which are populated
+            before this function is called, specific to the current execution context (local or a remote computer).
         #>
         
         Write-Verbose "Mode: $PoshSYSIMode - Running Minimal information set"
@@ -594,19 +654,38 @@ function Get-PoshSYSI {
             $Script:PoshSYSIData.Monitors.Clear()
             $Script:PoshSYSIData.InstalledPrograms.Clear()
             try {
-                $Bios = Get-CimInstance -ClassName Win32_Bios
-                $BitLockerStatus = (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
-                $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
-                $ComputerSystemInstall = (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" | Select-Object CreationTime).CreationTime
-                $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'"
-                $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi
-                $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory
-                $PhysicalMemoryCap = ($PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
-                $Processor = Get-CimInstance -ClassName Win32_Processor
-                $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus).LicenseStatus
-                $WinVersion = Get-ComputerInfo
+                $Bios = Get-CimInstance -ClassName Win32_Bios -ErrorAction Stop
             } catch {
-                Write-Error "Error retrieving system info: $($_.Exception.Message)"
+                Write-Error (New-PoshSYSIErrorRecord -OriginalErrorRecord $_ -CustomMessage "Failed to retrieve BIOS information on local machine" -TargetObject $env:COMPUTERNAME)
+                Write-Verbose "Detailed error for local BIOS retrieval: $($($_) | Format-List * | Out-String)"
+            }
+            
+            try {
+                $BitLockerStatus = (New-Object -ComObject Shell.Application -ErrorAction Stop).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection')
+            } catch {
+                Write-Error (New-PoshSYSIErrorRecord -OriginalErrorRecord $_ -CustomMessage "Failed to retrieve BitLocker status on local machine" -TargetObject $env:COMPUTERNAME)
+                Write-Verbose "Detailed error for local BitLocker status retrieval: $($($_) | Format-List * | Out-String)"
+            }
+            
+            try {
+                $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop
+                $ComputerSystemInstallObj = Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" -ErrorAction Stop | Select-Object CreationTime -First 1
+                $ComputerSystemInstall = if ($ComputerSystemInstallObj) { $ComputerSystemInstallObj.CreationTime } else { $null } # Ensure $ComputerSystemInstall is $null if file not found
+                $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -ErrorAction Stop
+                $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -ErrorAction Stop
+                $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -ErrorAction Stop
+                if ($PhysicalMemory) {
+                    $PhysicalMemoryCap = ($PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
+                } else {
+                    $PhysicalMemoryCap = 0
+                }
+                $Processor = Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop
+                $WinLicenseProduct = Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" -ErrorAction Stop | Where-Object { $_.PartialProductKey } | Select-Object LicenseStatus -First 1
+                $WinLicenseStatus = if ($WinLicenseProduct) { $WinLicenseProduct.LicenseStatus } else { $null } # Ensure $WinLicenseStatus is $null if not found
+                $WinVersion = Get-ComputerInfo -ErrorAction Stop
+            } catch {
+                Write-Error (New-PoshSYSIErrorRecord -OriginalErrorRecord $_ -CustomMessage "Failed to retrieve general system information on local machine" -TargetObject $env:COMPUTERNAME)
+                Write-Verbose "Detailed error for local general system info retrieval: $($($_) | Format-List * | Out-String)"
             }
 
             # Generate report if -Report:$true
@@ -647,40 +726,47 @@ function Get-PoshSYSI {
                     
                     try {
                         # Use the CimSession for all CIM queries
-                        $Bios = Get-CimInstance -ClassName Win32_Bios -CimSession $cimSession
-                        $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -CimSession $cimSession
-                        $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -CimSession $cimSession
-                        $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -CimSession $cimSession
-                        $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -CimSession $cimSession
+                        $Bios = Get-CimInstance -ClassName Win32_Bios -CimSession $cimSession -ErrorAction Stop
+                        $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -CimSession $cimSession -ErrorAction Stop
+                        $DiskC = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DeviceID='C:'" -CimSession $cimSession -ErrorAction Stop
+                        $Monitors = Get-CimInstance -ClassName WmiMonitorID -Namespace root\wmi -CimSession $cimSession -ErrorAction Stop
+                        $PhysicalMemory = Get-CimInstance -ClassName Win32_PhysicalMemory -CimSession $cimSession -ErrorAction Stop
                         if ($PhysicalMemory) {
                             $PhysicalMemoryCap = ($PhysicalMemory | Measure-Object -Property Capacity -Sum).Sum/1GB
                         } else {
                             $PhysicalMemoryCap = 0
                         }
-                        $Processor = Get-CimInstance -ClassName Win32_Processor -CimSession $cimSession
-                        $WinLicenseStatus = (Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" -CimSession $cimSession | Where-Object { $_.PartialProductKey } | Select-Object -ExpandProperty LicenseStatus -ErrorAction SilentlyContinue)
+                        $Processor = Get-CimInstance -ClassName Win32_Processor -CimSession $cimSession -ErrorAction Stop
+                        $WinLicenseProductRemote = Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Name like 'Windows%'" -CimSession $cimSession -ErrorAction Stop | Where-Object { $_.PartialProductKey } | Select-Object -ExpandProperty LicenseStatus -First 1 -ErrorAction SilentlyContinue
+                        $WinLicenseStatus = if ($WinLicenseProductRemote) { $WinLicenseProductRemote } else { $null } # Ensure $WinLicenseStatus is $null if not found
                         
-                        # Invoke-Command for operations not suitable for direct CIM or requiring script blocks
-                        $ComputerSystemInstall = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { 
+                        # Invoke-Command for operations not suitable for direct CIM or requiring script blocks, now using the established CimSession for transport
+                        $ComputerSystemInstall = (Invoke-Command -CimSession $cimSession -ScriptBlock { 
                             try { (Get-ChildItem -Path "C:\Windows\debug\NetSetup.LOG" -ErrorAction Stop | Select-Object -ExpandProperty CreationTime -First 1) } catch { $null }
                         })
-                        $WinVersion = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { Get-ComputerInfo })
-                        $BitLockerStatus = (Invoke-Command -ComputerName $ComputerItem -ScriptBlock { 
-                            try { (New-Object -ComObject Shell.Application).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') } catch { $null }
+                        $WinVersion = (Invoke-Command -CimSession $cimSession -ScriptBlock { Get-ComputerInfo -ErrorAction Stop })
+                        $BitLockerStatus = (Invoke-Command -CimSession $cimSession -ScriptBlock { 
+                            try { (New-Object -ComObject Shell.Application -ErrorAction Stop).NameSpace('C:').Self.ExtendedProperty('System.Volume.BitLockerProtection') } catch { $null }
                         })
 
                         # Invoke data processing and display functions
+                        # Note: Invoke-SYSIMode and its sub-functions (Invoke-SYSIMinimal, Invoke-SYSINormal, Invoke-SYSIFull)
+                        # are executed in the context of the machine running Get-PoshSYSI.
+                        # For 'Full' mode, this means Get-SYSIInstalledProgs runs locally, not on the remote target.
+                        # This is a known current limitation for remote 'Full' mode.
                         if ($Report) {
                             Invoke-SYSIMode *> (Join-Path -Path $ReportPath -ChildPath "$($ComputerItem)_PoshSYSI_Remote_$($PoshSYSIRunTime).log")
                         } else {
                             Invoke-SYSIMode
                         }
                     } catch {
-                        Write-Error "Error retrieving specific info from $($ComputerItem): $($_.Exception.Message)"
+                        Write-Error (New-PoshSYSIErrorRecord -OriginalErrorRecord $_ -CustomMessage "Error retrieving specific information from $($ComputerItem) after CIM session was established." -TargetObject $ComputerItem)
+                        Write-Verbose "Detailed error during data retrieval from $($ComputerItem): $($($_) | Format-List * | Out-String)"
                     }
                 } catch {
+                    Write-Error (New-PoshSYSIErrorRecord -OriginalErrorRecord $_ -CustomMessage "Failed to establish CIM session with $($ComputerItem) or a critical remote operation failed." -TargetObject $ComputerItem)
                     Write-Host "`n$($ComputerItem) not reachable or CIM session creation failed!" -BackgroundColor DarkRed -ForegroundColor White
-                    Write-Verbose "CIM Connection error for $($ComputerItem): $($_.Exception.Message)"
+                    Write-Verbose "CIM Connection or critical remote operation error for $($ComputerItem): $($($_) | Format-List * | Out-String)"
                 } finally {
                     if ($cimSession) {
                         Remove-CimSession -CimSession $cimSession
@@ -691,4 +777,5 @@ function Get-PoshSYSI {
     }
 
     Write-Output $Script:PoshSYSIData
+    Remove-Variable PoshSYSI_ErrorHelper -Scope Script -ErrorAction SilentlyContinue
 }
