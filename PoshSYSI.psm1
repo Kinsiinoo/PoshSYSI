@@ -471,36 +471,44 @@ function Get-PoshSYSI {
     <#
     .SYNOPSIS
         Retrieves system information from local or remote computers.
-        
+
     .DESCRIPTION
         Get-PoshSYSI retrieves detailed system information including hardware, 
         operating system, and installed software from local or remote computers.
-        
+
     .PARAMETER ComputerName
         Specifies the remote computers to retrieve information from. Used with -PoshSYSIRunMode Remote.
-        
+
     .PARAMETER PoshSYSIMode
         Specifies the level of detail for system information.
         Minimal: Basic system info (System, BIOS, Processor, Memory).
         Normal: Minimal info plus BitLocker (C:\), Storage (C:\), Monitor(s), Windows OS details. (Default)
         Full: Normal info plus a list of installed programs.
-        
+
     .PARAMETER PoshSYSIRunMode
         Specifies whether to run the command locally or remotely.
         Local: Gathers information from the local machine.
         Remote: Gathers information from computers specified by -ComputerName.
-        
+
     .PARAMETER Report
-        If specified as $true, outputs the console display to a log file in C:\Temp\PoshSYSI\.
+        If specified as $true, outputs the console display to a log file.
         Defaults to $false (no log file generated).
-        
+
+    .PARAMETER ReportPath
+        Specifies the directory path where the report log files will be saved.
+        Defaults to "C:\Temp\PoshSYSI\" if not specified. This parameter is only used if -Report is $true.
+
     .EXAMPLE
         Get-PoshSYSI -PoshSYSIRunMode Local -PoshSYSIMode Minimal
         Retrieves minimal system information from the local computer and displays it to the console.
-        
+
     .EXAMPLE
         Get-PoshSYSI -ComputerName "Server01", "Workstation05" -PoshSYSIMode Full -PoshSYSIRunMode Remote -Report $true
-        Retrieves full system information from Server01 and Workstation05, displays it to the console, and saves the output to log files.
+        Retrieves full system information from Server01 and Workstation05, displays it to the console, and saves the output to log files in the default path.
+
+    .EXAMPLE
+        Get-PoshSYSI -PoshSYSIRunMode Local -Report $true -ReportPath "C:\PoshSYSIReports\"
+        Retrieves system information from the local computer and saves the report to "C:\PoshSYSIReports\".
 
     .OUTPUTS
         System.Management.Automation.PSCustomObject
@@ -523,12 +531,19 @@ function Get-PoshSYSI {
         [String]$PoshSYSIRunMode,
         [Parameter(Mandatory=$false,Position=2,ParameterSetName="LOCAL")]
         [Parameter(Mandatory=$false,Position=3,ParameterSetName="REMOTE")]
-        [bool]$Report = $false
+        [bool]$Report = $false,
+        [Parameter(Mandatory=$false,Position=3,ParameterSetName="LOCAL")]
+        [Parameter(Mandatory=$false,Position=4,ParameterSetName="REMOTE")]
+        [string]$ReportPath = "C:\Temp\PoshSYSI\"
     )
 
     # Report variables
-    $PoshSYSIOutPath = "C:\Temp\PoshSYSI\"
     $PoshSYSIRunTime = (Get-Date).ToString('yyyy-MM-dd-HH-mm-ss')
+
+    # Ensure ReportPath ends with a backslash if it's a directory
+    if ($Report -and $ReportPath -and !(Test-Path -PathType Leaf -Path $ReportPath) -and !($ReportPath.EndsWith('\'))) {
+        $ReportPath = Join-Path -Path $ReportPath -ChildPath '\'
+    }
 
     # Script-level PSCustomObject for report details
     $Script:PoshSYSIData = [PSCustomObject]@{
@@ -604,10 +619,10 @@ function Get-PoshSYSI {
 
             # Generate report if -Report:$true
             if ($Report) {
-                If(!(Test-Path -Path $PoshSYSIOutPath)){
-                    New-Item -ItemType Directory -Force -Path $PoshSYSIOutPath | Out-Null
+                If(!(Test-Path -Path $ReportPath)){
+                    New-Item -ItemType Directory -Force -Path $ReportPath | Out-Null
                 }
-                Invoke-SYSIMode *> "$($PoshSYSIOutPath)\PoshSYSI_Local_$($PoshSYSIRunTime).log"
+                Invoke-SYSIMode *> (Join-Path -Path $ReportPath -ChildPath "PoshSYSI_Local_$($PoshSYSIRunTime).log")
             } else {
                 Invoke-SYSIMode
             }
@@ -615,8 +630,8 @@ function Get-PoshSYSI {
         'Remote' {
             Write-Verbose "RunMode: Remote"
             if ($Report) { # Create directory once if reporting for remote hosts
-                If(!(Test-Path -Path $PoshSYSIOutPath)){
-                    New-Item -ItemType Directory -Force -Path $PoshSYSIOutPath | Out-Null
+                If(!(Test-Path -Path $ReportPath)){
+                    New-Item -ItemType Directory -Force -Path $ReportPath | Out-Null
                 }
             }
             foreach ($ComputerItem in $ComputerName) {
@@ -640,7 +655,7 @@ function Get-PoshSYSI {
                     # Generate report if -Report:$true
                     if ($Report) {
                         # Directory is already ensured to exist if $Report is true (created before loop)
-                        Invoke-SYSIMode *> "$($PoshSYSIOutPath)\$($ComputerItem)_PoshSYSI_Remote_$($PoshSYSIRunTime).log"
+                        Invoke-SYSIMode *> (Join-Path -Path $ReportPath -ChildPath "$($ComputerItem)_PoshSYSI_Remote_$($PoshSYSIRunTime).log")
                     } else {
                         Invoke-SYSIMode
                     }
