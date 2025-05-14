@@ -1,4 +1,4 @@
-# PoshSYSI (PowerShell System Information) - 0.3.0.0
+# PoshSYSI (PowerShell System Information) - 0.3.1.0
 
 <p align="center">
   <a href="https://github.com/Kinsiinoo/PoshSYSI"><img src="https://img.shields.io/github/languages/top/kinsiinoo/poshsysi?style=for-the-badge"></a>
@@ -110,8 +110,8 @@ You can specify a custom path using the `-ReportPath` parameter.
 ## Known issues
 
 - ~~[#1](https://github.com/Kinsiinoo/PoshSYSI/issues/1) System info: wrong user~~
-- [#2](https://github.com/Kinsiinoo/PoshSYSI/issues/2) Wait for variables (Partially addressed by improved error handling and CIM session stability)
-- [#3](https://github.com/Kinsiinoo/PoshSYSI/issues/3) Remote: Installed programs (Still an issue for remote 'Full' mode, documented in module help)
+- ~~[#2](https://github.com/Kinsiinoo/PoshSYSI/issues/2) Wait for variables~~ (Fixed in 0.3.1.0 with improved error handling, proper variable initialization, and more robust CIM session management)
+- ~~[#3](https://github.com/Kinsiinoo/PoshSYSI/issues/3) Remote: Installed programs~~ (Addressed in 0.3.1.0 by implementing remote retrieval)
 - ~~[#4](https://github.com/Kinsiinoo/PoshSYSI/issues/4) Change WMI to CIM~~
 
 ## Todo
@@ -129,6 +129,14 @@ You can specify a custom path using the `-ReportPath` parameter.
   - [ ] Multilingual interface
 
 ## Changelog
+
+### Version 0.3.1.0
+- Implemented retrieval of installed programs from remote computers in 'Full' mode using `Invoke-Command` with CIM sessions.
+- Introduced a standardized error handling mechanism (`New-PoshSYSIErrorRecord`) for more consistent and detailed error reporting.
+- Ensured proper re-initialization of data structures for each local run and for every remote computer processed, preventing data carry-over.
+- Added automatic normalization for `ReportPath` to ensure it ends with a backslash if it's a directory.
+- Refined remote data fetching for OS installation date, `Get-ComputerInfo`, BitLocker status, and Windows License status using targeted `Invoke-Command` calls.
+- Improved robustness of data collection with more granular try-catch blocks for different data categories (Minimal, Normal).
 
 ### Version 0.3.0.0
 - Added optional `ReportPath` parameter for custom report output directory.
